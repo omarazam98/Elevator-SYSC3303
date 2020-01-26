@@ -1,0 +1,110 @@
+import static org.junit.Assert.*;
+
+import org.junit.Before;
+import org.junit.Test;
+
+
+import java.util.Date;
+
+public class RequestTest {
+
+    private Request req1 = null;
+    private Request req2 = null;
+    private Date date1 = null;
+    private Date date2 = null;
+
+    @Before
+    public void setUp() throws Exception {
+
+        this.date1 = new Date();
+        this.date2 = new Date();
+
+        req1 = new Request(date1, 1, "UP", 1);
+        req2 = new Request(date2, 2, "DOWN", 2);
+    }
+
+    @Test
+    public void testSetFloor() {
+        assertTrue(req1.getFloor() == 1);
+        req1.setFloor(2);
+        assertTrue(req1.getFloor() == 2);
+    }
+
+    /**
+     * req1's direction is up
+     * sets req1's direction to down
+     * checks if req1's direction is up, should be false
+     *
+     */
+    @Test
+    public void testSetDirec() {
+        assertTrue(req1.getDirec().contentEquals("UP"));
+        req1.setDirec("DOWN");
+        assertFalse(req1.getDirec().contentEquals("UP"));
+    }
+
+    /**
+     * req1's carButton is 1
+     * check to see if it is 1
+     * carButton is changed to 3
+     * checks if req1's carButton is 3, should be true
+     */
+    @Test
+    public void testSetCarButton() {
+        assertTrue(req1.getCarButton() == 1);
+        req1.setCarButton(3);
+
+        //req1 sets carButton to 3
+        assertTrue(req1.getCarButton() == 3);
+    }
+
+    /**
+     * checks if both req1 and req2 times are equal,
+     * should be false,
+     * because they were instantiated at different times.
+     */
+    @Test
+    public void testGetTime() {
+        assertTrue(req1.getTime() != null);
+
+    }
+
+    /**
+     * ckecks if req1's floorNumber is 1, should be true
+     * sets req1's floorNumber to 5
+     * sets req2's floorNumber to 5
+     * tests getFloor() by comparing req1 and req2 floorNumber,
+     * should be true
+     */
+    @Test
+    public void testGetFloor() {
+        assertTrue(req1.getFloor() == 1);
+        req1.setFloor(5);
+        req2.setFloor(5);
+
+        assertTrue(req1.getFloor() == req2.getFloor());
+    }
+
+    /**
+     * tests if req1's direction is "UP"
+     * sets req1's direction to req2's direction (via req2.getDirec())
+     */
+    @Test
+    public void testGetDirec() {
+        assertTrue(req1.getDirec().equals("UP"));
+        req1.setDirec(req2.getDirec());
+        assertTrue(req1.getDirec().contentEquals("DOWN"));
+    }
+
+    /**
+     * tests if req1's carButton is 1, should be true
+     * sets req'2 carButton to req1's carButton (via req1.getCarButton())
+     * test if req2's carButton is 1, should be true
+     */
+    @Test
+    public void testGetCarButton() {
+        assertTrue(req1.getCarButton() == 1);
+        req2.setCarButton(req1.getCarButton());
+        assertTrue(req2.getCarButton() == 1);
+    }
+}
