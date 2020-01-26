@@ -13,7 +13,8 @@ public class FloorSubSystem implements Runnable{
 	private Scheduler scheduler;
 	private int floor;				   //0 is the ground floor
 	private int topFloor;
-	private Queue<Request> requestList;
+	private Queue<Request> requestList_UP;
+	private Queue<Request> requestList_DOWN;
 	//private int schedulerPort;
 	private String floorLamp;          //up/down button have been pressed
 	boolean floorLampOn;
@@ -24,7 +25,8 @@ public class FloorSubSystem implements Runnable{
 	 * @param level
 	 */
 	public FloorSubSystem(int floor, int topFloor) {
-		requestList = new LinkedList<Request>();
+		if(floor != topFloor) requestList_UP = new LinkedList<Request>();
+		if(floor != 0) requestList_DOWN = new LinkedList<Request>();
 		this.floor = floor;
 		this.topFloor = topFloor;
 	}
@@ -60,7 +62,8 @@ public class FloorSubSystem implements Runnable{
 		if(floor == topFloor && floorLamp.equals("UP")) return false;
 		
 		Request newReq = new Request(date, floor, direction, carButton);
-		requestList.add(newReq);
+		if(direction.equals("UP")) requestList_UP.add(newReq);
+		if(direction.equals("DOWN"))requestList_DOWN.add(newReq);
 		toggleFloorLamp(direction, true); //set the floor lamp
 		//scheduler.getReq(newReq);
 		//send request to scheduler
@@ -70,14 +73,23 @@ public class FloorSubSystem implements Runnable{
 	//when elevator arrives
 	//send the requirement list to elevator
 	//clear all the requests of that floor
-	public Queue<Request> elevatorArrive() {
-		Queue<Request> tempList = requestList;
-		requestList.clear();
+	public Queue<Request> elevatorArrive(String direction) {
+		Queue<Request> tempList = new LinkedList<Request>();
+
+		if(direction.equals("UP")){
+			tempList = requestList_UP;
+			requestList_UP.clear();
+		}
+		if(direction.equals("DOWN")) {
+			tempList = requestList_DOWN;
+			requestList_DOWN.clear();
+		}
 		return tempList;
 	}
 
 	@Override
 	public void run() {
+
 		while(true) {
 			if(floorLampOn) {
 				//get the floor of elevator
