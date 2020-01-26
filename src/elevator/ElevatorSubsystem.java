@@ -3,8 +3,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import Request;
-import Scheduler;
+import info.Request;
+import scheduler.Scheduler;
+
+
 
 public class ElevatorSubsystem implements Runnable{
 	
