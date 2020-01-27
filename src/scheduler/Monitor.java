@@ -37,4 +37,54 @@ public class Monitor {
 		this.queueDirection = Direction.STAY;
 	//	this.elevatorCurrentState = new ElevatorState(elevatorStartFloorLocation, currentElevatorFloorLocation, currentElevatorDirection, currentElevatorStatus, currentElevatorDoorStatus, totalNumberOfFloors);
 	}
+
+	public Object getElevatorStatus() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean isEmpty() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean addFirstTripRequest(TripRequest requestedTrip) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void updateElevatorDirection(Direction nextDirection) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public Direction getNextElevatorDirection() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void updateElevatorDoorStatus(ElevatorDoorStatus close) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void updateElevatorStatus(ElevatorStatus stop) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public HashSet<TripRequest> stopOccurred() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object getQueueDirection() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean addEnRouteTripRequest(TripRequest tripRequest) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

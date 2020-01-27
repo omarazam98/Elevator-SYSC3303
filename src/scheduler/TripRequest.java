@@ -5,5 +5,14 @@ package scheduler;
  *
  */
 public class TripRequest {
+
+	public TripRequest(int pickupFloorNumber, int destinationFloorNumber) {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Object getDirection() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
