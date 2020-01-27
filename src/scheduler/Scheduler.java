@@ -358,7 +358,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			}
 
 			if (isElevatorOnStartFloor) {
-				// Update direction enum to free i.e., STAY
+				// Update direction enum to free state i.e., STAY
 				elevatorMonitor.updateElevatorDirection(Direction.STAY);
 
 				this.toString(
