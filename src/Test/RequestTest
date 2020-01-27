@@ -6,6 +6,11 @@ import org.junit.Test;
 
 import java.util.Date;
 
+/**
+ * Test class to test methods in Request Class
+ * @author abdullaal-wazzan
+ * @version 1
+ */
 public class RequestTest {
 
     private Request req1 = null;
@@ -23,6 +28,11 @@ public class RequestTest {
         req2 = new Request(date2, 2, "DOWN", 2);
     }
 
+    /**
+     * tests if req1's floorNumber is equal to 1, should be true
+     * sets req1's floorNumber to 2
+     * tests if req1's floorNumber is equal to 2, should be true
+     */
     @Test
     public void testSetFloor() {
         assertTrue(req1.getFloor() == 1);
