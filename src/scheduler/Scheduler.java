@@ -17,6 +17,7 @@ import info.ElevatorMotorRequest;
 import info.FloorButtonRequest;
 import info.Request;
 import info.RequestEvent;
+import main.scheduler.ElevatorMonitor;
 import scheduler.Monitor;
 import info.LampStatus;
 import info.ElevatorLampRequest;
@@ -376,9 +377,32 @@ public class Scheduler implements Runnable, ElevatorEvents {
 
 	}
 
-	private HashSet<TripRequest> assignPendingRequestsToElevator(Object elevatorName) {
-		// TODO Auto-generated method stub
-		return null;
+	private HashSet<TripRequest> assignPendingRequestsToElevator(String elevatorName) {
+		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
+		HashSet<TripRequest> pendingRequests = new HashSet<TripRequest>();
+		
+		//check if the elevator has any pending requests, if not, then assign it the the first one
+		//in the list of pending requests
+		if (elevatorMonitor.isEmpty()) {
+			TripRequest highestPriorityPendingRequest = this.pendingTripRequests.get(0);
+			if (assignTripToFreeElevator(elevatorName, highestPriorityPendingRequest)) {
+				pendingRequests.add(highestPriorityPendingRequest);
+				this.pendingTripRequests.remove(0);
+			}
+		}
+		
+
+		//Checking if the elevator can take up any other requests currently in queue for whom
+		// the elevator may not have to de-tour from its path
+		Iterator<TripRequest> iterator = pendingTripRequests.iterator();
+		while (iterator.hasNext()) {
+			TripRequest pendingTripRequest = iterator.next();
+			if (this.assignTripToInServiceElevator(elevatorName, pendingTripRequest)) {
+				pendingRequests.add(pendingTripRequest);
+				iterator.remove();
+			}
+		}
+		return pendingRequests;
 	}
 
 	private void eventElevatorArrivalNotice(String elevatorName, int parseInt) {
