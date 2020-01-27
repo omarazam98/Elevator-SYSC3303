@@ -17,7 +17,6 @@ import info.ElevatorMotorRequest;
 import info.FloorButtonRequest;
 import info.Request;
 import info.RequestEvent;
-import main.scheduler.ElevatorMonitor;
 import scheduler.Monitor;
 import info.LampStatus;
 import info.ElevatorLampRequest;
@@ -380,9 +379,10 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	private HashSet<TripRequest> assignPendingRequestsToElevator(String elevatorName) {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 		HashSet<TripRequest> pendingRequests = new HashSet<TripRequest>();
-		
-		//check if the elevator has any pending requests, if not, then assign it the the first one
-		//in the list of pending requests
+
+		// check if the elevator has any pending requests, if not, then assign it the
+		// the first one
+		// in the list of pending requests
 		if (elevatorMonitor.isEmpty()) {
 			TripRequest highestPriorityPendingRequest = this.pendingTripRequests.get(0);
 			if (assignTripToFreeElevator(elevatorName, highestPriorityPendingRequest)) {
@@ -390,9 +390,9 @@ public class Scheduler implements Runnable, ElevatorEvents {
 				this.pendingTripRequests.remove(0);
 			}
 		}
-		
 
-		//Checking if the elevator can take up any other requests currently in queue for whom
+		// Checking if the elevator can take up any other requests currently in queue
+		// for whom
 		// the elevator may not have to de-tour from its path
 		Iterator<TripRequest> iterator = pendingTripRequests.iterator();
 		while (iterator.hasNext()) {
@@ -405,9 +405,62 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		return pendingRequests;
 	}
 
-	private void eventElevatorArrivalNotice(String elevatorName, int parseInt) {
-		// TODO Auto-generated method stub
+	private void eventElevatorArrivalNotice(String elevatorName, int floorNumber) {
+		
+		// create instance of elevator monitor
+		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 
+		// Update the status of current elevator door
+		elevatorMonitor.updateElevatorFloorLocation(floorNumber);
+
+		// Check if the elevator has a stop on the current floor or not
+		if (elevatorMonitor.isStopRequired(floorNumber)) {
+			this.toString( elevatorName + "needs to stop at floor number: " + floorNumber);
+
+			// Check if this floor is the one to pick people or car and if so, send a message
+			//to turn off the floor direction lamp
+			if (elevatorMonitor.isPickupFloor(floorNumber)) {
+				Direction queueDirection = (Direction) elevatorMonitor.getQueueDirection();
+				this.toString(RequestEvent.SENT, "FLOOR " + floorNumber,
+						"Turn off " + queueDirection + " direction lamp as " + elevatorName + " has arrived.");
+				this.sendToServer(new FloorLampRequest(queueDirection, LampStatus.OFF),
+						this.portsByFloorName.get(String.valueOf(floorNumber)));
+			}
+			this.toString(RequestEvent.SENT, elevatorName, "Stop elevator.");
+			this.sendToServer(new ElevatorMotorRequest(elevatorName, Direction.STAY),
+					this.portsByElevatorName.get(elevatorName));
+		} else {
+			this.toString(elevatorName + " does not need to stop at floor number: " + floorNumber);
+			// Checking the direction to see if has changed or not during the 
+			//trip
+			Direction nextDirection = elevatorMonitor.getNextElevatorDirection();
+			this.sendElevatorMoveEvent(elevatorName, nextDirection);
+		}
+
+	}
+
+	public static void main(String[] args) {
+		// This will return a Map of Maps. First key -> elevator Name, Value -> map of
+		// all attributes for that elevator (as per config.xml)
+		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration
+				.getAllElevatorSubsystemConfigurations();
+
+		// This will return a Map of Maps. First key -> floor Name, Value -> map of all
+		// attributes for that elevator (as per config.xml)
+		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
+				.getAllFloorSubsytemConfigurations();
+
+		// This will return a Map of all attributes for the Scheduler (as per
+		// config.xml)
+		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
+
+		// Instantiate the scheduler
+		Scheduler scheduler = new Scheduler(schedulerConfiguration.get("name"),
+				Integer.parseInt(schedulerConfiguration.get("port")), elevatorConfigurations, floorConfigurations);
+
+		// Spawn and start a new thread for this Scheduler
+		Thread schedulerThread = new Thread(scheduler, schedulerConfiguration.get("name"));
+		schedulerThread.start();
 	}
 
 	@Override
