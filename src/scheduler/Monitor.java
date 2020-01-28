@@ -20,20 +20,20 @@ import elevator.ElevatorStatus;
  */
 public class Monitor {
 	private String currentELevatorName;
-	private LinkedHashSet<TripRequest> requestInQueue;
+	private LinkedHashSet<MakeTrip> requestInQueue;
 	private HashSet<Integer> destinationFloor;
 	private HashSet<Integer> requestFloor;	
 	private Direction queueDirection;
-	private ArrayList<TripRequest> tripRequestCompletionSuccess;
+	private ArrayList<MakeTrip> tripRequestCompletionSuccess;
 	private ElevatorState elevatorCurrentState;
 	
 	public Monitor(String elevatorName, Integer elevatorStartFloorLocation, Integer currentElevatorFloorLocation, Direction currentElevatorDirection, ElevatorStatus currentElevatorStatus, ElevatorDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
 		
 		this.currentELevatorName = elevatorName;
-		this.requestInQueue = new LinkedHashSet<TripRequest>();
+		this.requestInQueue = new LinkedHashSet<MakeTrip>();
 		this.destinationFloor = new HashSet<Integer>();
 		this.requestFloor = new HashSet<Integer>();
-		this.tripRequestCompletionSuccess = new ArrayList<TripRequest>();
+		this.tripRequestCompletionSuccess = new ArrayList<MakeTrip>();
 		this.queueDirection = Direction.STAY;
 	//	this.elevatorCurrentState = new ElevatorState(elevatorStartFloorLocation, currentElevatorFloorLocation, currentElevatorDirection, currentElevatorStatus, currentElevatorDoorStatus, totalNumberOfFloors);
 	}
@@ -48,7 +48,7 @@ public class Monitor {
 		return false;
 	}
 
-	public boolean addFirstTripRequest(TripRequest requestedTrip) {
+	public boolean addFirstTripRequest(MakeTrip requestedTrip) {
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -73,7 +73,7 @@ public class Monitor {
 		
 	}
 
-	public HashSet<TripRequest> stopOccurred() {
+	public HashSet<MakeTrip> stopOccurred() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -83,7 +83,32 @@ public class Monitor {
 		return null;
 	}
 
-	public boolean addEnRouteTripRequest(TripRequest tripRequest) {
+	public boolean addEnRouteTripRequest(MakeTrip tripRequest) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public Integer getElevatorFloorLocation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Integer getElevatorStartingFloorLocation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void updateElevatorFloorLocation(int floorNumber) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public boolean isStopRequired(int floorNumber) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean isPickupFloor(int floorNumber) {
 		// TODO Auto-generated method stub
 		return false;
 	}
