@@ -1,6 +1,6 @@
 package elevator;
 
-import info.Request;
+import requests.Request;
 
 public interface ElevatorEvents {
 	public void receiveEvent(Request event);

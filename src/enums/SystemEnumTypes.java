@@ -23,5 +23,12 @@ public class SystemEnumTypes {
 	public enum ElevatorCurrentDoorStatus {
 		OPEN, CLOSE
 	}
+	/*
+	 * public enum RequestType {
+	 * FLOOREDIRECTIONLAMP,FLOORBUTTON,ELEVATORARRIVAL,//for floor
+	 * ELEVATORLAMP,ELEVATORDOOR,ELEVATORMOTOR// for elevator
+	 * 
+	 * }
+	 */
 
 }

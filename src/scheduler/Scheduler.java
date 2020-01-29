@@ -13,10 +13,7 @@ import java.util.Queue;
 
 import scheduler.Monitor;
 import scheduler.MakeTrip;
-import elevator.Direction;
-import elevator.ElevatorDoorStatus;
-import elevator.ElevatorStatus;
-import elevator.ElevatorSystemComponent;
+import elevator.ElevatorEvents;
 import elevator.ElevatorSystemConfiguration;
 import enums.SystemEnumTypes;
 import requests.ElevatorArrivalRequest;
@@ -28,7 +25,7 @@ import requests.FloorLampRequest;
 import requests.Request;
 import server.Server;
 
-public class Scheduler implements Runnable, ElevatorSystemComponent {
+public class Scheduler implements Runnable, ElevatorEvents {
 
 	private String name;
 	private Server server;
@@ -90,8 +87,9 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 			// Initializing monitors for each elevator
 			this.monitorByElevatorName.put(currentElevator,
 					new Monitor(currentElevator, Integer.parseInt(config.get("startFloor")),
-							Integer.parseInt(config.get("startFloor")), Direction.STAY, ElevatorStatus.STOP,
-							ElevatorDoorStatus.OPEN, floorConfigurations.size()));
+							Integer.parseInt(config.get("startFloor")), SystemEnumTypes.Direction.STAY,
+							SystemEnumTypes.ElevatorCurrentStatus.STOP, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN,
+							floorConfigurations.size()));
 
 		}
 
@@ -99,6 +97,7 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 
 	@Override
 	public void run() {
+		this.toString("Scheduler is waiting for trip requests...");
 		while (true) {
 			this.eventHandler(this.getNextEvent());
 		}
@@ -171,7 +170,7 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 								SystemEnumTypes.FloorDirectionLampStatus.ON),
 						this.portsByElevatorName.get(elevatorName));
 
-				if (elevatorMonitor.getElevatorStatus() == ElevatorStatus.STOP) {
+				if (elevatorMonitor.getElevatorStatus() == SystemEnumTypes.ElevatorCurrentStatus.STOP) {
 					// closing the doors
 					this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
 					this.sendToServer(
@@ -258,7 +257,7 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 		// Creating an instance of monitor for the current elevator.
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 		// Change the elevator state to stopped
-		elevatorMonitor.updateElevatorStatus(ElevatorStatus.STOP);
+		elevatorMonitor.updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus.STOP);
 		// Updating the elevator monitor regarding the stopping of the elevator
 		HashSet<MakeTrip> completedTrips = elevatorMonitor.stopOccurred();
 		if (!completedTrips.isEmpty()) {
@@ -273,7 +272,7 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 
 	private void eventElevatorDoorClosed(String elevatorName) {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
-		elevatorMonitor.updateElevatorDoorStatus(ElevatorDoorStatus.CLOSE);
+		elevatorMonitor.updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
 		// obtaining the next direction of motion of the elevator form the monitor
 		SystemEnumTypes.Direction nextDirection = elevatorMonitor.getNextElevatorDirection();
 		elevatorMonitor.updateElevatorDirection(nextDirection);
@@ -285,7 +284,7 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 	private void sendElevatorMoveEvent(String elevatorName, SystemEnumTypes.Direction nextDirection) {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 
-		elevatorMonitor.updateElevatorStatus(ElevatorStatus.MOVE);
+		elevatorMonitor.updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus.MOVE);
 		elevatorMonitor.updateElevatorDirection(nextDirection);
 
 		this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Move elevator " + nextDirection + ".");
@@ -298,7 +297,7 @@ public class Scheduler implements Runnable, ElevatorSystemComponent {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 
 		// changing the elevator door status to OPEN
-		elevatorMonitor.updateElevatorDoorStatus(ElevatorDoorStatus.OPEN);
+		elevatorMonitor.updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN);
 		// check if the current elevator has any pending requests or not
 		if (!this.pendingTripRequests.isEmpty()) {
 			HashSet<MakeTrip> assignedPendingRequests = this.assignPendingRequestsToElevator(elevatorName);

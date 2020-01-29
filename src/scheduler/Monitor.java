@@ -5,10 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
-import elevator.Direction;
-import elevator.ElevatorDoorStatus;
 import elevator.ElevatorState;
-import elevator.ElevatorStatus;
 import enums.SystemEnumTypes;
 
 /**
@@ -28,8 +25,9 @@ public class Monitor {
 	private ElevatorState elevatorCurrentState;
 
 	public Monitor(String elevatorName, Integer elevatorStartFloorLocation, Integer currentElevatorFloorLocation,
-			Direction currentElevatorDirection, ElevatorStatus currentElevatorStatus,
-			ElevatorDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
+			SystemEnumTypes.Direction currentElevatorDirection,
+			SystemEnumTypes.ElevatorCurrentStatus currentElevatorStatus,
+			SystemEnumTypes.ElevatorCurrentDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
 
 		this.currentELevatorName = elevatorName;
 		this.requestInQueue = new LinkedHashSet<MakeTrip>();
@@ -124,13 +122,13 @@ public class Monitor {
 		return currentLowestFloor;
 	}
 
-	public void updateElevatorDoorStatus(ElevatorDoorStatus updatedDoorState) {
+	public void updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus updatedDoorState) {
 		this.elevatorCurrentState.setDoorStatus(updatedDoorState);
 
 	}
 
-	public void updateElevatorStatus(ElevatorStatus updatedElevatorStatus) {
-		this.elevatorCurrentState.setDoorStatus(updatedElevatorStatus);
+	public void updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus updatedElevatorStatus) {
+		this.elevatorCurrentState.setStatus(updatedElevatorStatus);
 
 	}
 
@@ -205,7 +203,7 @@ public class Monitor {
 					// if the above conditions are not satisfied, do not add request to the queue.
 					if ((this.elevatorCurrentState.getCurrentStatus() != SystemEnumTypes.ElevatorCurrentStatus.STOP)
 							|| (this.elevatorCurrentState
-									.getCurrentStatus() != SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN)) {
+									.getDoorStatus() != SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN)) {
 						return false;
 					}
 				} else {

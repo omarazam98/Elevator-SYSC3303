@@ -1,4 +1,6 @@
-package info;
+package requests;
+
+import enums.SystemEnumTypes;
 
 public class FloorButtonRequest extends Request {
 

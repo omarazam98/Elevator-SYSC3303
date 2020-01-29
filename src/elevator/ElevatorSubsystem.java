@@ -1,80 +1,242 @@
 package elevator;
-import java.util.ArrayList;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import info.Request;
-import scheduler.Scheduler;
+import requests.ElevatorArrivalRequest;
+import requests.ElevatorDoorRequest;
+import requests.ElevatorLampRequest;
+import requests.ElevatorMotorRequest;
+import requests.Request;
+import server.Server;
+import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.RequestEvent;
 
+public class ElevatorSubsystem implements Runnable, ElevatorEvents {
+	// class variables
+	private Server server;
+	private Thread serverThread;
+	private String name;
+	private ElevatorState state;
+	private Queue<Request> eventsQueue;
+	private boolean debug = false;
+	private int schedulerPort;
 
+	public ElevatorSubsystem(String name, int port, int startFloor, int schedulerPort, int maxFloor) {
+		this.name = name;
+		this.eventsQueue = new LinkedList<Request>();
+		this.state = new ElevatorState(startFloor, startFloor, SystemEnumTypes.Direction.STAY,
+				SystemEnumTypes.ElevatorCurrentStatus.STOP, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN, maxFloor);
+		this.schedulerPort = schedulerPort;
 
-public class ElevatorSubsystem implements Runnable{
-	
-    private Scheduler scheduler;
-    private Queue<Request> eventQueue;
-    private Direction direction;
-    private ElevatorDoorStatus doorstatus;
-    private ElevatorStatus status;
-    private int currentfloor;
-    private ArrayList <Integer> destination;
-    private ArrayList <Boolean> lamp;
-    private int totalNum;
-    
-    
-    public ElevatorSubsystem (Scheduler scheduler){
-    	this.scheduler = scheduler;
-    	this.eventQueue = new LinkedList<Request>();
-    	this.direction = null;
-    	this.doorstatus = ElevatorDoorStatus.CLOSE;
-    	this.status = status.STOP;
-    	this.currentfloor = 1;
-    	this.destination = new ArrayList<Integer>();
-    	this.lamp = new ArrayList<Boolean>();
-    	this.totalNum = 0;
-    	
-    	
-    }
-    public void receiveEvent(Request r) {
-    	eventQueue.add(r);
-    	int i = r.getCarButton();
-    	destination.add(i-1, i);
-    	lampOn(i);
-    	
-    }
-    public Request getNextEvent() {
-    	Request r = eventQueue.poll();
-    	int i = r.getCarButton();
-    	destination.remove(i-1);
-    	lampOff(i);
-    	return r;
-    }
-    
-    public void setTotalNum(int totalNum) {
-    	this.totalNum = totalNum;
-    	this.lamp = new ArrayList<Boolean>(totalNum);
-    	this.destination = new ArrayList<Integer>(totalNum);
-    	for(int i=0;i<lamp.size();i++) {
-    		lamp.add(i,false);
-    	}
-    }
-    public void lampOn(int i) {
-    	//System.out.println("The floor" +destination.get(i) )
-    	lamp.set(i-1, true);
-    }
-    public void lampOff(int i) {
-    	lamp.set(i-1, false);
-    }
-    public void doorOpen() {
-    	doorstatus = ElevatorDoorStatus.OPEN;
-    	System.out.println("Door is open");
-    }
-    public void doorClose() {
-    	doorstatus = ElevatorDoorStatus.CLOSE;
-    	System.out.println("Door is close");
-    }
-    public void run() {
-        
-    }
-	
+		// Create a server (bound to this Instance of ElevatorSubsystem) in a new
+		// thread.
+		// When this server receives requests, they will be added to the eventsQueue of
+		// THIS ElevatorSubsystem instance.
+		server = new Server(this, port, this.debug);
+		serverThread = new Thread(server, name);
+		serverThread.start();
+	}
+
+	@Override
+	public synchronized void receiveEvent(Request event) {
+		eventsQueue.add(event);
+		this.notifyAll();
+	}
+
+	@Override
+	public synchronized Request getNextEvent() {
+		while (eventsQueue.isEmpty()) {
+			try {
+				this.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		return eventsQueue.poll();
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	// thread run
+	@Override
+	public void run() {
+		while (true) {
+			this.handleEvent(this.getNextEvent());
+		}
+	}
+
+	private void handleEvent(Request event) {
+		// switch statement corresponding to different "event handlers"
+		if (event instanceof ElevatorArrivalRequest) {
+			ElevatorArrivalRequest request = (ElevatorArrivalRequest) event;
+			this.consoleOutput("Sending arrival notice.");
+			this.sendToServer(request);
+		} else if (event instanceof ElevatorDoorRequest) {
+			ElevatorDoorRequest request = (ElevatorDoorRequest) event;
+			if (request.getRequestAction() == SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN) {
+				this.consoleOutput(RequestEvent.RECEIVED, "Scheduler", "Open elevator doors.");
+				this.handleElevatorOpenDoor();
+			} else if (request.getRequestAction() == SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE) {
+				this.consoleOutput(RequestEvent.RECEIVED, "Scheduler", "Close elevator doors.");
+				this.handleElevatorCloseDoor();
+			}
+		} else if (event instanceof ElevatorMotorRequest) {
+			ElevatorMotorRequest request = (ElevatorMotorRequest) event;
+			if (request.getRequestAction() == SystemEnumTypes.Direction.STAY) {
+				this.consoleOutput(RequestEvent.RECEIVED, "Scheduler", "Stop elevator.");
+				this.handleElevatorStop();
+			} else if (request.getRequestAction() == SystemEnumTypes.Direction.UP) {
+				this.consoleOutput(RequestEvent.RECEIVED, "Scheduler", "Move elevator up.");
+				this.handleElevatorMoveUP();
+			} else if (request.getRequestAction() == SystemEnumTypes.Direction.DOWN) {
+				this.consoleOutput(RequestEvent.RECEIVED, "Scheduler", "Move elevator down.");
+				this.handleElevatorMoveDown();
+			}
+		} else if (event instanceof ElevatorLampRequest) {
+			ElevatorLampRequest request = (ElevatorLampRequest) event;
+			this.consoleOutput(RequestEvent.RECEIVED, "Scheduler",
+					"Turn on floor " + request.getElevatorButton() + " button lamp.");
+			toggleLamp(Integer.parseInt(request.getElevatorButton()), true);
+		}
+	}
+
+	// toggles lamp state dependent on floor provided
+	private void toggleLamp(int floor, Boolean b) {
+		this.state.toggleLamp(floor, b);
+	}
+
+	// toggles lamp state dependent on floor provided
+	private void handleElevatorStop() {
+		this.state.setDirection(SystemEnumTypes.Direction.STAY);
+		this.state.setStatus(SystemEnumTypes.ElevatorCurrentStatus.STOP);
+		this.consoleOutput("Turn off floor " + this.state.getCurrentFloor() + " button lamp if on.");
+		this.state.toggleLamp(this.state.getCurrentFloor(), false);
+		ElevatorMotorRequest request = new ElevatorMotorRequest(this.name, SystemEnumTypes.Direction.STAY);
+		this.consoleOutput(RequestEvent.SENT, "Scheduler", "Stopped at " + this.state.getCurrentFloor() + ".");
+		this.sendToServer(request);
+	}
+
+	private void handleElevatorMoveUP() {
+		if (this.state.getDoorStatus() != SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN) {
+			this.state.setDirection(SystemEnumTypes.Direction.UP);
+			this.state.setStatus(SystemEnumTypes.ElevatorCurrentStatus.MOVE);
+			this.consoleOutput("Elevator motor set to move up. Simulating travel time...");
+			try {
+				Thread.sleep(5000);
+			} catch (java.lang.InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.state.setCurrentFloor(this.state.getCurrentFloor() + 1);
+			this.consoleOutput(RequestEvent.SENT, "Scheduler",
+					"Arriving at floor " + this.state.getCurrentFloor() + ".");
+			ElevatorArrivalRequest request = new ElevatorArrivalRequest(this.name,
+					Integer.toString(this.state.getCurrentFloor()));
+			this.sendToServer(request);
+		}
+	}
+
+	private void handleElevatorMoveDown() {
+		if (this.state.getDoorStatus() != SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN) {
+			this.state.setDirection(SystemEnumTypes.Direction.DOWN);
+			this.state.setStatus(SystemEnumTypes.ElevatorCurrentStatus.MOVE);
+			this.consoleOutput("Elevator motor set to move down. Simulating travel time...");
+			try {
+				Thread.sleep(5000);
+			} catch (java.lang.InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.state.setCurrentFloor(this.state.getCurrentFloor() - 1);
+			this.consoleOutput(RequestEvent.SENT, "Scheduler",
+					"Arriving at floor " + this.state.getCurrentFloor() + ".");
+			ElevatorArrivalRequest request = new ElevatorArrivalRequest(this.name,
+					Integer.toString(this.state.getCurrentFloor()));
+			this.sendToServer(request);
+		}
+
+	}
+
+	private void handleElevatorOpenDoor() {
+		this.state.setDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN);
+		this.consoleOutput(RequestEvent.SENT, "Scheduler", "Doors are opened.");
+		ElevatorDoorRequest request = new ElevatorDoorRequest(this.name,
+				SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN);
+		this.sendToServer(request);
+	}
+
+	private void handleElevatorCloseDoor() {
+		this.state.setDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
+		this.consoleOutput(RequestEvent.SENT, "Scheduler", "Doors are closed.");
+		ElevatorDoorRequest request = new ElevatorDoorRequest(this.name,
+				SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
+		this.sendToServer(request);
+	}
+
+	private void sendToServer(Request request) {
+		try {
+			this.server.send(request, InetAddress.getLocalHost(), this.schedulerPort);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void consoleOutput(String output) {
+		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
+				+ this.name + " : " + output);
+	}
+
+	private void consoleOutput(RequestEvent event, String target, String output) {
+		if (event.equals(RequestEvent.SENT)) {
+			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
+					+ this.name + " : [EVENT SENT TO " + target + "] " + output);
+		} else if (event.equals(RequestEvent.RECEIVED)) {
+			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
+					+ this.name + " : [EVENT RECEIVED FROM " + target + "] " + output);
+		}
+	}
+
+	public static void main(String[] args) {
+		// This will return a Map of Maps. First key -> elevator Name, Value -> map of
+		// all attributes for that elevator (as per config.xml)
+		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration
+				.getAllElevatorSubsystemConfigurations();
+
+		// This will return a Map of all attributes for the Scheduler (as per
+		// config.xml)
+		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
+
+		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
+				.getAllFloorSubsytemConfigurations();
+
+		int tempfloor = 0;
+		for (String floorName : floorConfigurations.keySet()) {
+			// find amount of floors
+			tempfloor += tempfloor;
+		}
+
+		// Iterate through each elevator and create an instance of an ElevatorSubsystem
+		for (String elevatorName : elevatorConfigurations.keySet()) {
+			// Get the configuration for this particular 'elevatorName'
+			HashMap<String, String> elevatorConfiguration = elevatorConfigurations.get(elevatorName);
+
+			// Create an instance of ElevatorSubsystem for this 'elevatorName'
+			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName,
+					Integer.parseInt(elevatorConfiguration.get("port")),
+					Integer.parseInt(elevatorConfiguration.get("startFloor")),
+					Integer.parseInt(schedulerConfiguration.get("port")), tempfloor);
+
+			// Spawn and start a new thread for this ElevatorSubsystem instance
+			Thread elevatorSubsystemThread = new Thread(elevatorSubsystem, elevatorName);
+			elevatorSubsystemThread.start();
+		}
+
+	}
 
 }
