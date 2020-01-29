@@ -9,7 +9,7 @@ import elevator.Direction;
 import elevator.ElevatorDoorStatus;
 import elevator.ElevatorState;
 import elevator.ElevatorStatus;
-import info.SystemEnumTypes;
+import enums.SystemEnumTypes;
 
 /**
  * This class is responsible to maintain the current state of the elevator and

@@ -11,24 +11,24 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import info.ElevatorArrivalRequest;
-import info.ElevatorDoorRequest;
-import info.ElevatorMotorRequest;
-import info.FloorButtonRequest;
-import info.FloorLampRequest;
-import info.Request;
-import info.RequestType;
-import info.SystemEnumTypes;
 import scheduler.Monitor;
-import info.ElevatorLampRequest;
 import scheduler.MakeTrip;
 import elevator.Direction;
 import elevator.ElevatorDoorStatus;
-import elevator.ElevatorEvents;
 import elevator.ElevatorStatus;
+import elevator.ElevatorSystemComponent;
+import elevator.ElevatorSystemConfiguration;
+import enums.SystemEnumTypes;
+import requests.ElevatorArrivalRequest;
+import requests.ElevatorDoorRequest;
+import requests.ElevatorLampRequest;
+import requests.ElevatorMotorRequest;
+import requests.FloorButtonRequest;
+import requests.FloorLampRequest;
+import requests.Request;
 import server.Server;
 
-public class Scheduler implements Runnable, ElevatorEvents {
+public class Scheduler implements Runnable, ElevatorSystemComponent {
 
 	private String name;
 	private Server server;
@@ -106,7 +106,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	}
 
 	private void eventHandler(Request event) {
-		if (event.getType().equals(RequestType.FLOORBUTTON)) {
+		if (event instanceof FloorButtonRequest) {
 			FloorButtonRequest request = (FloorButtonRequest) event;
 			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getFloorName(),
 					"A trip request has been made from floor " + request.getFloorName() + " to go to floor:  "
@@ -131,7 +131,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		} else if (event instanceof ElevatorMotorRequest) {
 			ElevatorMotorRequest request = (ElevatorMotorRequest) event;
 
-			if (request.getRequestAction() == Direction.STAY) {
+			if (request.getRequestAction() == SystemEnumTypes.Direction.STAY) {
 				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
 						"Elevator is in free state.");
 				this.eventElevatorStopped(request.getElevatorName());
@@ -229,7 +229,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	 * @param target   the destination where the request is supposed to go
 	 * @param output   prints out the output
 	 */
-	private void toString(info.SystemEnumTypes.RequestEvent received, String target, String output) {
+	private void toString(enums.SystemEnumTypes.RequestEvent received, String target, String output) {
 		if (received.equals(SystemEnumTypes.RequestEvent.SENT)) {
 			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
 					+ this.name + " : [Successfully sent event to " + target + "] " + output);
@@ -427,14 +427,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	}
 
 	@Override
-	public void receiveEvent(Request event) {
-		eventsQueue.add(event);
-		this.notifyAll();
-
-	}
-
-	@Override
-	public Request getNextEvent() {
+	public synchronized Request getNextEvent() {
 		while (eventsQueue.isEmpty()) {
 			try {
 				this.wait();
@@ -442,8 +435,6 @@ public class Scheduler implements Runnable, ElevatorEvents {
 				e.printStackTrace();
 			}
 		}
-		// returns the first item that was inserted in the queue and also removes it
-		// from the queue
 		return eventsQueue.poll();
 	}
 
@@ -452,4 +443,9 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		return this.name;
 	}
 
+	@Override
+	public synchronized void receiveEvent(Request request) {
+		eventsQueue.add(request);
+		this.notifyAll();
+	}
 }

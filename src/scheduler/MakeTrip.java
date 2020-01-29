@@ -1,6 +1,6 @@
 package scheduler;
 
-import info.SystemEnumTypes;
+import enums.SystemEnumTypes;
 /*
  * This class deals with the trip requests that have been made and contains 
  * getters and setters for the user current and destination locations respectively.

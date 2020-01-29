@@ -1,4 +1,4 @@
-package info;
+package enums;
 
 public class SystemEnumTypes {
 	public enum RequestEvent {
