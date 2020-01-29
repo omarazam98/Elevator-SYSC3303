@@ -3,7 +3,11 @@ package Client;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -14,45 +18,46 @@ import info.Request;
 import info.RequestType;
 
 //each floor has one floorSubsystem
-public class FloorSubSystem implements Runnable{
+public class FloorSubSystem implements Runnable, ElevatorSystemComponent{
 	private Scheduler scheduler;
 	private Server server;
-	private int floor;				   //0 is the ground floor
+	private int floorPort;				   //0 is the ground floor
 	private int topFloor;
 	private Queue<Request> buttonRequest_UP;
 	private Queue<Request> buttonRequest_DOWN;
 	private Queue<Request> eventRequest;
-	//private int schedulerPort;
+	private int schedulerPort;				  //which scheduler will work
+	private final boolean debug = false;
 	private LampStatus floorLamp_UP;          //up button have been pressed
 	private LampStatus floorLamp_DOWN;
 	private LampStatus directLamp;         //the arrival of elevator and direction of elevator
 	
-	/**
-	 * 
-	 * @param level
-	 */
-	public FloorSubSystem(int floor, int topFloor) {
-		if(floor != topFloor) buttonRequest_UP = new LinkedList<Request>();
-		if(floor != 0) buttonRequest_DOWN = new LinkedList<Request>();
-		this.floor = floor;
+
+	//port used to specify each floorSubSystem in a list of floors
+	public FloorSubSystem(int floorPort, int topFloor, int schedulerPort) {
+		if(floorPort != topFloor) buttonRequest_UP = new LinkedList<Request>();
+		if(floorPort != 0) buttonRequest_DOWN = new LinkedList<Request>();
+		
+		this.floorPort = floorPort;
 		this.topFloor = topFloor;
 		floorLamp_UP.setStr("OFF");
 		floorLamp_DOWN.setStr("OFF");
 		directLamp.setStr("OFF");
-		//server = new Server();
+		this.schedulerPort = schedulerPort;
+		server = new Server(this, floorPort, debug);
 	}
 	
 	//when up/down button is pressed
 	public boolean toggleFloorLamp(String floorLamp, String lamp) {
-		if(floor == 0 && floorLamp.equals("DOWN")) return false;
-		if(floor == topFloor && floorLamp.equals("UP")) return false;
+		if(floorPort == 0 && floorLamp.equals("DOWN")) return false;
+		if(floorPort == topFloor && floorLamp.equals("UP")) return false;
 		if(floorLamp.equals("UP")) this.floorLamp_UP.setStr(floorLamp);
 		if(floorLamp.equals("DOWN")) this.floorLamp_DOWN.setStr(floorLamp);
 		else if(floorLamp.equals("OFF")) {
 			if(lamp.equals("UP")) this.floorLamp_UP.setStr(floorLamp);
 			if(lamp.equals("DOWN")) this.floorLamp_DOWN.setStr(floorLamp);
 		}
-		System.out.println("Floor lamp on level" + floor + ": " + floorLamp_UP.toString() + ", " + floorLamp_DOWN.toString());
+		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor lamp on floor" + floorPort + ": " + floorLamp_UP.toString() + ", " + floorLamp_DOWN.toString());
 		return true;
 	}
 	
@@ -60,9 +65,14 @@ public class FloorSubSystem implements Runnable{
 	//depends on the direction of elevator
 	public void toggleDirecLamp(String direcLamp) {
 		this.directLamp.setStr(direcLamp);
-		System.out.println("Direction lamp on level" + floor + ": " + direcLamp);
+		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Direction lamp on floor" + floorPort + ": " + direcLamp);
 	}
 	
+	public int getLevel() {
+		return floorPort;
+	}
+	
+	//the format of input string: "time floor floorButton CarButton"
 	public boolean readingInputReq(String fileName) {
 		
 		FileInputStream fileRead = new FileInputStream(fileName);
@@ -98,13 +108,20 @@ public class FloorSubSystem implements Runnable{
 	
 	//requests send by Server, Scheduler, etc
 	//should be solved when running thread
-	public void receiveEvents(Request request) {
+	public synchronized void receiveEvents(Request request) {
 		this.eventRequest.add(request);
+		this.notifyAll();
 	}
 	
 	public void handleRequest(Request request) {
-		if(request.equals(RequestType.FLOORDIRECTIONLAMP)) {
-			this.toggleDirecLamp(request.getDirec());
+		if(request.equals(RequestType.FLOORBUTTON)) {
+			try {
+				this.toggleDirecLamp(request.getDirec());
+				this.server.send(request, InetAddress.getLocalHost(), schedulerPort);
+				System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Button " + request.getDirec() + " at floor " + floorPort + " has been pressed.");
+			} catch (UnknownHostException e) {
+              e.printStackTrace();
+          }
 		}
 		else if(request.equals(RequestType.ELEVATORARRIVAL)) {
 			//send corresponding requests (up/down) to elevator
@@ -117,7 +134,7 @@ public class FloorSubSystem implements Runnable{
 				this.toggleFloorLamp("DOWN", "OFF");
 			}
 			
-			System.out.println("Elevator has arrived at level " + floor + ", the direction of elevator is: " + request.getDirec());
+			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Elevator has arrived at floor " + floorPort + ", the direction of elevator is: " + request.getDirec());
 		}
 	}
 	
@@ -155,3 +172,4 @@ public class FloorSubSystem implements Runnable{
 	
 
 }
+
