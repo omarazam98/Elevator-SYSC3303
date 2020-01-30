@@ -16,6 +16,10 @@ import scheduler.MakeTrip;
 import elevator.ElevatorEvents;
 import elevator.ElevatorSystemConfiguration;
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.Direction;
+import enums.SystemEnumTypes.ElevatorDoorStatus;
+import enums.SystemEnumTypes.ElevatorStatus;
+import enums.SystemEnumTypes.FloorDirectionLampStatus;
 import requests.ElevatorArrivalRequest;
 import requests.ElevatorDoorRequest;
 import requests.ElevatorLampRequest;
@@ -88,7 +92,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			this.monitorByElevatorName.put(currentElevator,
 					new Monitor(currentElevator, Integer.parseInt(config.get("startFloor")),
 							Integer.parseInt(config.get("startFloor")), SystemEnumTypes.Direction.STAY,
-							SystemEnumTypes.ElevatorCurrentStatus.STOP, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN,
+							ElevatorStatus.STOP, ElevatorDoorStatus.OPEN,
 							floorConfigurations.size()));
 
 		}
@@ -122,9 +126,9 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			ElevatorDoorRequest request = (ElevatorDoorRequest) event;
 			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
 					"State of the elevator door is: " + request.getRequestAction() + ".");
-			if (request.getRequestAction() == SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN) {
+			if (request.getRequestAction() == ElevatorDoorStatus.OPEN) {
 				this.eventElevatorDoorOpened(request.getElevatorName());
-			} else if (request.getRequestAction() == SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE) {
+			} else if (request.getRequestAction() == ElevatorDoorStatus.CLOSE) {
 				this.eventElevatorDoorClosed(request.getElevatorName());
 			}
 		} else if (event instanceof ElevatorMotorRequest) {
@@ -170,11 +174,11 @@ public class Scheduler implements Runnable, ElevatorEvents {
 								SystemEnumTypes.FloorDirectionLampStatus.ON),
 						this.portsByElevatorName.get(elevatorName));
 
-				if (elevatorMonitor.getElevatorStatus() == SystemEnumTypes.ElevatorCurrentStatus.STOP) {
+				if (elevatorMonitor.getElevatorStatus() == ElevatorStatus.STOP) {
 					// closing the doors
 					this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
 					this.sendToServer(
-							new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+							new ElevatorDoorRequest(elevatorName, ElevatorDoorStatus.CLOSE),
 							this.portsByElevatorName.get(elevatorName));
 				}
 				return;
@@ -257,7 +261,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		// Creating an instance of monitor for the current elevator.
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 		// Change the elevator state to stopped
-		elevatorMonitor.updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus.STOP);
+		elevatorMonitor.updateElevatorStatus(ElevatorStatus.STOP);
 		// Updating the elevator monitor regarding the stopping of the elevator
 		HashSet<MakeTrip> completedTrips = elevatorMonitor.stopOccurred();
 		if (!completedTrips.isEmpty()) {
@@ -266,13 +270,13 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		}
 
 		this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Open elevator door.");
-		this.sendToServer(new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN),
+		this.sendToServer(new ElevatorDoorRequest(elevatorName, ElevatorDoorStatus.OPEN),
 				this.portsByElevatorName.get(elevatorName));
 	}
 
 	private void eventElevatorDoorClosed(String elevatorName) {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
-		elevatorMonitor.updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
+		elevatorMonitor.updateElevatorDoorStatus(ElevatorDoorStatus.CLOSE);
 		// obtaining the next direction of motion of the elevator form the monitor
 		SystemEnumTypes.Direction nextDirection = elevatorMonitor.getNextElevatorDirection();
 		elevatorMonitor.updateElevatorDirection(nextDirection);
@@ -284,7 +288,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	private void sendElevatorMoveEvent(String elevatorName, SystemEnumTypes.Direction nextDirection) {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 
-		elevatorMonitor.updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus.MOVE);
+		elevatorMonitor.updateElevatorStatus(ElevatorStatus.MOVE);
 		elevatorMonitor.updateElevatorDirection(nextDirection);
 
 		this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Move elevator " + nextDirection + ".");
@@ -297,7 +301,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
 
 		// changing the elevator door status to OPEN
-		elevatorMonitor.updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN);
+		elevatorMonitor.updateElevatorDoorStatus(ElevatorDoorStatus.OPEN);
 		// check if the current elevator has any pending requests or not
 		if (!this.pendingTripRequests.isEmpty()) {
 			HashSet<MakeTrip> assignedPendingRequests = this.assignPendingRequestsToElevator(elevatorName);
@@ -310,7 +314,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			this.toString(elevatorName + " still has requests in queue");
 
 			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
-			this.sendToServer(new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+			this.sendToServer(new ElevatorDoorRequest(elevatorName,ElevatorDoorStatus.CLOSE),
 					this.portsByElevatorName.get(elevatorName));
 		} else {
 			Integer currentFloor = elevatorMonitor.getElevatorFloorLocation();
@@ -336,7 +340,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 
 				this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
 				this.sendToServer(
-						new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+						new ElevatorDoorRequest(elevatorName, ElevatorDoorStatus.CLOSE),
 						this.portsByElevatorName.get(elevatorName));
 			}
 		}
@@ -388,11 +392,11 @@ public class Scheduler implements Runnable, ElevatorEvents {
 						.getQueueDirection();
 				this.toString(SystemEnumTypes.RequestEvent.SENT, "FLOOR " + floorNumber,
 						elevatorName + " has arrived." + "Turning off " + queueDirection + " direction light.");
-				this.sendToServer(new FloorLampRequest(queueDirection, SystemEnumTypes.FloorDirectionLampStatus.OFF),
+				this.sendToServer(new FloorLampRequest(queueDirection, FloorDirectionLampStatus.OFF),
 						this.portsByFloorName.get(String.valueOf(floorNumber)));
 			}
 			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Stop elevator.");
-			this.sendToServer(new ElevatorMotorRequest(elevatorName, SystemEnumTypes.Direction.STAY),
+			this.sendToServer(new ElevatorMotorRequest(elevatorName, Direction.STAY),
 					this.portsByElevatorName.get(elevatorName));
 		} else {
 			this.toString(elevatorName + " does not need to stop at floor number: " + floorNumber);

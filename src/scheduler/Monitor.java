@@ -7,6 +7,9 @@ import java.util.LinkedHashSet;
 
 import elevator.ElevatorState;
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.Direction;
+import enums.SystemEnumTypes.ElevatorDoorStatus;
+import enums.SystemEnumTypes.ElevatorStatus;
 
 /**
  * This class is responsible to maintain the current state of the elevator and
@@ -20,14 +23,14 @@ public class Monitor {
 	private LinkedHashSet<MakeTrip> requestInQueue;
 	private HashSet<Integer> destinationFloor;
 	private HashSet<Integer> requestFloor;
-	private SystemEnumTypes.Direction queueDirection;
+	private Direction queueDirection;
 	private ArrayList<MakeTrip> tripRequestCompletionSuccess;
 	private ElevatorState elevatorCurrentState;
 
 	public Monitor(String elevatorName, Integer elevatorStartFloorLocation, Integer currentElevatorFloorLocation,
-			SystemEnumTypes.Direction currentElevatorDirection,
-			SystemEnumTypes.ElevatorCurrentStatus currentElevatorStatus,
-			SystemEnumTypes.ElevatorCurrentDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
+			Direction currentElevatorDirection,
+			ElevatorStatus currentElevatorStatus,
+			ElevatorDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
 
 		this.currentELevatorName = elevatorName;
 		this.requestInQueue = new LinkedHashSet<MakeTrip>();
@@ -122,12 +125,12 @@ public class Monitor {
 		return currentLowestFloor;
 	}
 
-	public void updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus updatedDoorState) {
+	public void updateElevatorDoorStatus(ElevatorDoorStatus updatedDoorState) {
 		this.elevatorCurrentState.setDoorStatus(updatedDoorState);
 
 	}
 
-	public void updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus updatedElevatorStatus) {
+	public void updateElevatorStatus(ElevatorStatus updatedElevatorStatus) {
 		this.elevatorCurrentState.setStatus(updatedElevatorStatus);
 
 	}
@@ -201,9 +204,9 @@ public class Monitor {
 				// STOP position and the doors are open, only then add it to queue
 				if (this.elevatorCurrentState.getCurrentFloor() == tripRequest.getUserinitalLocation()) {
 					// if the above conditions are not satisfied, do not add request to the queue.
-					if ((this.elevatorCurrentState.getCurrentStatus() != SystemEnumTypes.ElevatorCurrentStatus.STOP)
+					if ((this.elevatorCurrentState.getCurrentStatus() != ElevatorStatus.STOP)
 							|| (this.elevatorCurrentState
-									.getDoorStatus() != SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN)) {
+									.getDoorStatus() != ElevatorDoorStatus.OPEN)) {
 						return false;
 					}
 				} else {

@@ -1,6 +1,7 @@
 package requests;
 
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.ElevatorDoorStatus;
 
 public class ElevatorDoorRequest extends Request {
 
@@ -8,7 +9,7 @@ public class ElevatorDoorRequest extends Request {
 	 * Name of the elevator's doors to open
 	 */
 	private String ElevatorName;
-	private SystemEnumTypes.ElevatorCurrentDoorStatus RequestAction;
+	private ElevatorDoorStatus RequestAction;
 
 	/**
 	 * Type of request for parsing purposes
@@ -21,7 +22,7 @@ public class ElevatorDoorRequest extends Request {
 	 * @param name
 	 * @param status
 	 */
-	public ElevatorDoorRequest(String name, SystemEnumTypes.ElevatorCurrentDoorStatus action) {
+	public ElevatorDoorRequest(String name, ElevatorDoorStatus action) {
 		this.setRequestType(RequestType);
 		this.ElevatorName = name;
 		this.RequestAction = action;
@@ -35,11 +36,11 @@ public class ElevatorDoorRequest extends Request {
 		ElevatorName = elevatorName;
 	}
 
-	public SystemEnumTypes.ElevatorCurrentDoorStatus getRequestAction() {
+	public ElevatorDoorStatus getRequestAction() {
 		return RequestAction;
 	}
 
-	public void setRequestAction(SystemEnumTypes.ElevatorCurrentDoorStatus requestAction) {
+	public void setRequestAction(ElevatorDoorStatus requestAction) {
 		RequestAction = requestAction;
 	}
 

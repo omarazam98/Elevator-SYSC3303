@@ -16,11 +16,11 @@ public class SystemEnumTypes {
 		UP, DOWN, STAY
 	}
 
-	public enum ElevatorCurrentStatus {
+	public enum ElevatorStatus {
 		MOVE, STOP
 	}
 
-	public enum ElevatorCurrentDoorStatus {
+	public enum ElevatorDoorStatus {
 		OPEN, CLOSE
 	}
 	/*

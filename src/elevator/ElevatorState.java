@@ -2,20 +2,25 @@ package elevator;
 
 import java.util.HashMap;
 
-import enums.SystemEnumTypes;
+
+
+import enums.SystemEnumTypes.Direction;
+import enums.SystemEnumTypes.ElevatorStatus;
+import enums.SystemEnumTypes.ElevatorDoorStatus;
+
 
 public class ElevatorState {
 
 	private int startFloor;
 	private int currentFloor;
-	private SystemEnumTypes.Direction direction;
-	private SystemEnumTypes.ElevatorCurrentStatus status;
-	private SystemEnumTypes.ElevatorCurrentDoorStatus doorStatus;
-	private int totalNum;// change name
+	private Direction direction;
+	private ElevatorStatus status;
+	private ElevatorDoorStatus doorStatus;
+	private int totalNum;
 	private HashMap<Integer, Boolean> lamps;
 
-	public ElevatorState(int start, int current, SystemEnumTypes.Direction direction,
-			SystemEnumTypes.ElevatorCurrentStatus status, SystemEnumTypes.ElevatorCurrentDoorStatus doorStatus,
+	public ElevatorState(int start, int current, Direction direction,
+			ElevatorStatus status, ElevatorDoorStatus doorStatus,
 			int totalNum) {
 
 		this.startFloor = start;
@@ -23,7 +28,7 @@ public class ElevatorState {
 		this.direction = direction;
 		this.status = status;
 		this.doorStatus = doorStatus;
-		this.totalNum = totalNum;// change name
+		this.totalNum = totalNum;
 		this.lamps = new HashMap<Integer, Boolean>();
 
 		for (int i = 1; i <= this.totalNum; i++) {
@@ -49,36 +54,35 @@ public class ElevatorState {
 		this.currentFloor = i;
 	}
 
-	public SystemEnumTypes.Direction getDirection() {
+	public Direction getDirection() {
 		return this.direction;
 	}
 
-	public void setDirection(SystemEnumTypes.Direction direction) {
+	public void setDirection(Direction direction) {
 		this.direction = direction;
 	}
 
-	public SystemEnumTypes.ElevatorCurrentStatus getCurrentStatus() {
+	public ElevatorStatus getCurrentStatus() {
 		return this.status;
 	}
 
-	public void setStatus(SystemEnumTypes.ElevatorCurrentStatus status) {
+	public void setStatus(ElevatorStatus status) {
 		this.status = status;
 	}
 
-	public SystemEnumTypes.ElevatorCurrentDoorStatus getDoorStatus() {
+	public ElevatorDoorStatus getDoorStatus() {
 		return doorStatus;
 	}
 
-	public void setDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus doorStatus) {
+	public void setDoorStatus(ElevatorDoorStatus doorStatus) {
 		this.doorStatus = doorStatus;
 	}
 
 	public int getHighestFloor() {
-		return this.totalNum;// change name
+		return this.totalNum;
 	}
 
 	public void toggleLamp(int floor, boolean toggle) {
-		lamps.put(floor, toggle);// change name
+		lamps.put(floor, toggle);
 	}
-
 }

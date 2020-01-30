@@ -4,6 +4,7 @@ import java.net.DatagramPacket;
 import java.util.Arrays;
 
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.ElevatorDoorStatus;
 import requests.DirectionLampRequest;
 import requests.ElevatorArrivalRequest;
 import requests.ElevatorDoorRequest;
@@ -116,8 +117,8 @@ public final class Helper {
 		} else if (Arrays.equals(rt, ElevatorDoorRequest.getRequestType())) {
 			/* Parse based on Elevator Door Request */
 			String ElevatorName = ParseString(data, counter);
-			SystemEnumTypes.ElevatorCurrentDoorStatus Action = (SystemEnumTypes.ElevatorCurrentDoorStatus) ParseEnum(
-					data, SystemEnumTypes.ElevatorCurrentDoorStatus.class, counter);
+			ElevatorDoorStatus Action = (ElevatorDoorStatus) ParseEnum(
+					data, ElevatorDoorStatus.class, counter);
 			request = new ElevatorDoorRequest(ElevatorName, Action);
 		} else if (Arrays.equals(rt, ElevatorLampRequest.getRequestType())) {
 			/* Parse based on Elevator Lamp Request */
