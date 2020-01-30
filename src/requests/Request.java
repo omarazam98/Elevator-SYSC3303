@@ -2,8 +2,6 @@ package requests;
 
 import java.util.Date;
 
-import enums.SystemEnumTypes;
-
 public class Request {
 	private Date time;
 	private int floor;
@@ -27,6 +25,10 @@ public class Request {
 		this.floor = floor;
 		this.direction = direction;
 		this.carButton = carButton;
+	}
+	
+	public Date getTime() {
+		return time;
 	}
 
 	public void setFloor(int floor) {

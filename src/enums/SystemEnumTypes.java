@@ -13,7 +13,7 @@ public class SystemEnumTypes {
 	}
 
 	public enum Direction {
-		UP, DOWN, STAY
+		UP, DOWN, STAY;
 	}
 
 	public enum ElevatorCurrentStatus {
@@ -22,13 +22,5 @@ public class SystemEnumTypes {
 
 	public enum ElevatorCurrentDoorStatus {
 		OPEN, CLOSE
-	}
-	/*
-	 * public enum RequestType {
-	 * FLOOREDIRECTIONLAMP,FLOORBUTTON,ELEVATORARRIVAL,//for floor
-	 * ELEVATORLAMP,ELEVATORDOOR,ELEVATORMOTOR// for elevator
-	 * 
-	 * }
-	 */
-
+	}	
 }
