@@ -43,7 +43,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		serverThread = new Thread(server, name);
 		serverThread.start();
 	}
-
+    public ElevatorSubsystem(String name,int schedulerPort) {
+    	this.name = name;
+    	this.schedulerPort = schedulerPort;
+    }
 	// receive request event from the event queue
 	public synchronized void receiveEvent(Request event) {
 		events.add(event);
