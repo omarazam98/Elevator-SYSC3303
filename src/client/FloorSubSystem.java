@@ -28,18 +28,33 @@ import requests.FloorLampRequest;
 import requests.Request;
 import server.Server;
 
+/**
+ * This class is responsible for creating the trip requests for passengers.
+ * These request will be used by the elevator system. The floor subsystem will
+ * be responsible for: - reading data from the file - creating and sending
+ * requests to the elevator - toggling the lamp (button light) when uses press
+ * it
+ *
+ */
 public class FloorSubSystem implements Runnable, ElevatorEvents {
 
 	private Server server;
 	private String floorNum;
 	private Queue<Request> eventRequest;
-	private int schedulerPort; // which scheduler will work
+	private int schedulerPort;
 	private final boolean debug = false;
 	@SuppressWarnings("unused")
 	private SystemEnumTypes.FloorDirectionLampStatus floorLamp_UP;
 	@SuppressWarnings("unused")
 	private SystemEnumTypes.FloorDirectionLampStatus floorLamp_DOWN;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param floorNum      the floor number
+	 * @param floorPort     the port on which the floor will operate
+	 * @param schedulerPort the scheduler port
+	 */
 	public FloorSubSystem(String floorNum, int floorPort, int schedulerPort) {
 
 		this.floorNum = floorNum;
@@ -71,7 +86,13 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		return floorNum;
 	}
 
-	// when up/down button is pressed change the state accordingly
+	/**
+	 * when up/down button is pressed change the state accordingly
+	 * 
+	 * @param floorLamp the the light on the button (UP or DOWN)
+	 * @param lamp      direction of motion
+	 * @return
+	 */
 	public boolean toggleFloorLamp(String floorLamp, String lamp) {
 		if (floorLamp.equals("UP"))
 			this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.ON;
@@ -83,13 +104,18 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 			if (lamp.equals("DOWN"))
 				this.floorLamp_DOWN = SystemEnumTypes.FloorDirectionLampStatus.OFF;
 		}
-		System.out.println(
-				"[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Tuning "
-		+ floorLamp + " button lamp " + lamp + "." );
+		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Tuning "
+				+ floorLamp + " button lamp " + lamp + ".");
 		return true;
 	}
 
-	// the format of input string: "time floor floorButton CarButton"
+	/**
+	 * this method is responsible for reading in the coming request form the file
+	 * 
+	 * @param fileName
+	 * @return a list with all the requests that are read form the file
+	 */
+
 	public static List<FloorButtonRequest> readingInputReq(String fileName) {
 		List<FloorButtonRequest> requests = new LinkedList<FloorButtonRequest>();
 
@@ -119,14 +145,18 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		return requests;
 	}
 
-	// requests send by Server, Scheduler, etc
-	// should be solved when running thread
+	// receives requests send by Server, Scheduler, etc
 	@Override
 	public synchronized void receiveEvent(Request request) {
 		eventRequest.add(request);
 		this.notifyAll();
 	}
 
+	/**
+	 * Determines the type of Request and calls.
+	 * 
+	 * @param request the incoming request
+	 */
 	private void handleRequest(Request request) {
 		if (request instanceof FloorButtonRequest) {
 			try {
@@ -134,8 +164,8 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 				this.server.send(currRequest, InetAddress.getLocalHost(), schedulerPort);
 				System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S"))
 						+ "] Button " + currRequest.getDirection() + " at floor " + floorNum + " has been pressed.");
-				this.toggleFloorLamp(currRequest.getDirection().toString(),"ON"); // Turn on button lamp
-				
+				this.toggleFloorLamp(currRequest.getDirection().toString(), "ON"); // Turn on button lamp
+
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
@@ -156,6 +186,9 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		}
 	}
 
+	/**
+	 * This method is responsible for creating an instance of the floor subsystem
+	 */
 	public static void main(String[] args) throws ParseException {
 		List<FloorSubSystem> floors = new LinkedList<FloorSubSystem>();
 		SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss.mmm");
@@ -186,7 +219,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		}
 
 		List<FloorButtonRequest> requests = readingInputReq("src/resources/requests.txt"); // Retrieve all requests from
-																						// input file
+																							// input file
 
 		// Sort requests based on time to be sent
 		Collections.sort(requests, new Comparator<FloorButtonRequest>() {

@@ -6,6 +6,13 @@ import enums.SystemEnumTypes.Direction;
 import enums.SystemEnumTypes.ElevatorCurrentStatus;
 import enums.SystemEnumTypes.ElevatorCurrentDoorStatus;
 
+/**
+ * This class is responsible for determining the current elevator state including:
+ * - the direction it is going
+ * - the state of the doors
+ * - the doors status
+ *
+ */
 public class ElevatorState {
 
 	private int startFloor;
@@ -16,6 +23,15 @@ public class ElevatorState {
 	private int totalNum;
 	private HashMap<Integer, Boolean> lamps;
 
+	/**
+	 * Constructor
+	 * @param start the floor on which the elevator is starting its journey
+	 * @param current the current floor of the elevator
+	 * @param direction the direction in which the elevaor is going
+	 * @param status the current status
+	 * @param doorStatus the state of the doors
+	 * @param totalNum the total number of floors
+	 */
 	public ElevatorState(int start, int current, Direction direction, ElevatorCurrentStatus status,
 			ElevatorCurrentDoorStatus doorStatus, int totalNum) {
 
