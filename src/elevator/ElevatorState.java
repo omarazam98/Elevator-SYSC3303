@@ -93,7 +93,7 @@ public class ElevatorState {
 	public void setHighestFloor(int i) {
 		this.totalNum = i;
 	}
-
+    // toggle the lamp status
 	public void toggleLamp(int floor, boolean toggle) {
 		lamps.put(floor, toggle);
 	}
