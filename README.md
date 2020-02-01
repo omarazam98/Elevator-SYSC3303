@@ -28,7 +28,7 @@ info
 *MutInt.java
 
 enums  
-*SystemEnumTypes.java: a collection of enums used to define the states of lamps, requests and directions
+*SystemEnumTypes.java: a collection of enums used to define the states of lamps, requests and directions    
 Author: Sayyid Kamran Sagheir   
 
 requests  
@@ -40,28 +40,28 @@ requests
 *FloorButtonRequest.java
 *FloorLampRequest.java
 *LampRequest.java
-*Request.java: This class and the other request classes are used to transmit informations between threads
+*Request.java: This class and the other request classes are used to transmit informations between threads    
 Author: Sayyid Kamran Sagheir, Tiantian Lin, Ruixuan Ni
 
 elevator  
 *ElevatorEvents.java: an interface for subsystems
 *ElevatorState.java: used to store the states of elevator, including moving, direction, floor, door and lamps
 *ElevatorSubsystem.java: used to simulate the moving of elevator
-*ElevatorSystemConfiguration.java: configure elevator subsystems by reading input xml files
+*ElevatorSystemConfiguration.java: configure elevator subsystems by reading input xml files    
 Author: Tiantian Lin
 
 floor   
-*FloorSubsystem.java: responsible for reading input requirements files, sending and receiving requests to/from server
+*FloorSubsystem.java: responsible for reading input requirements files, sending and receiving requests to/from server    
 Author: Ruixuan Ni
 
 unit tests  
 *RequestTest.java
-*FloorSubsystemTest.java
+*FloorSubsystemTest.java    
 Author: Abdulla Al-wazzan
 *ServerTest.java
 *SchedulerTest.java
-*ElevatorSubsystemTest.java
+*ElevatorSubsystemTest.java    
 Author: Omar Azam 
 
-UML diagrams  
+UML diagrams     
 Author: Abdulla Al-wazzan 
