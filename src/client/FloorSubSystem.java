@@ -71,7 +71,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		return floorNum;
 	}
 
-	// when up/down button is pressed
+	// when up/down button is pressed change the state accordingly
 	public boolean toggleFloorLamp(String floorLamp, String lamp) {
 		if (floorLamp.equals("UP"))
 			this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.ON;
