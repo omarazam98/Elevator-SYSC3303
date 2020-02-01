@@ -6,7 +6,7 @@
 - Tiantian Lin 
 - Ruixuan Ni 
 
-##Introduction
+## Introduction
 This project is a simulation of elevators and the control systems.
 
 This project can be executed by running the main method in scheduler.java. The FloorSubsystem will then get requests from 
@@ -27,11 +27,11 @@ info
 *Helper.java: transfer between requests and datagram packet
 *MutInt.java
 
-enums
+enums  
 *SystemEnumTypes.java: a collection of enums used to define the states of lamps, requests and directions
 Author: Sayyid Kamran Sagheir   
 
-requests
+requests  
 *DirectionLampRequest.java
 *ElevatorArrivalRequest.java
 *ElevatorDoorRequest.java
@@ -43,18 +43,18 @@ requests
 *Request.java: This class and the other request classes are used to transmit informations between threads
 Author: Sayyid Kamran Sagheir, Tiantian Lin, Ruixuan Ni
 
-elevator
+elevator  
 *ElevatorEvents.java: an interface for subsystems
 *ElevatorState.java: used to store the states of elevator, including moving, direction, floor, door and lamps
 *ElevatorSubsystem.java: used to simulate the moving of elevator
 *ElevatorSystemConfiguration.java: configure elevator subsystems by reading input xml files
 Author: Tiantian Lin
 
-floor 
+floor   
 *FloorSubsystem.java: responsible for reading input requirements files, sending and receiving requests to/from server
 Author: Ruixuan Ni
 
-unit tests
+unit tests  
 *RequestTest.java
 *FloorSubsystemTest.java
 Author: Abdulla Al-wazzan
@@ -63,5 +63,5 @@ Author: Abdulla Al-wazzan
 *ElevatorSubsystemTest.java
 Author: Omar Azam 
 
-UML diagrams
+UML diagrams  
 Author: Abdulla Al-wazzan 
