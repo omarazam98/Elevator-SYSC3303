@@ -15,7 +15,7 @@ and FloorSubsystem will then deal with these requests and keeps print out the ev
 
 ## Deliverables
 
-scheduler
+scheduler  
 *MakeTrip.java: deals with the trip requests made, contains current and destination location
 *Monitor.java: used to update the current state of elevator and stores list of trips'information
 *Scheduler.java: accepting requests and sending events and commands(requests) as reponds
