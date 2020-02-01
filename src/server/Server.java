@@ -65,7 +65,7 @@ public class Server implements Runnable {
 			this.sendSocket.send(packet);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(1);
+			//System.exit(1);
 		}
 
 	}
@@ -85,7 +85,7 @@ public class Server implements Runnable {
 			// Since no timeout was specified, we know this is not a socket time out
 			// exception
 			System.out.println("Unhandled Exception Occurred. Exiting.");
-			System.exit(1);
+			//System.exit(1);
 		}
 		return packet;
 	}

@@ -58,12 +58,13 @@ public final class Helper {
 	public static Request ParseRequest(DatagramPacket packet) {
 		byte[] data = packet.getData();
 		// int data_length = packet.getLength();
-		// if(data.length != data_length) throw Invalid();
+		// if(data.length != data_length) System.out.println();
 		MutInt counter = new MutInt(0);
 		if (data[counter.getAndIncrement()] != 0) {
-			System.out.println("Invalid data. Please enter the data in the correct format");
-			System.exit(0);
+			System.out.println("Could not parse data. Invalid request.");
 		}
+		// System.exit(0);
+		// }
 
 		String[] SrcDests = ParseSrcDest(data, counter);
 
@@ -156,9 +157,8 @@ public final class Helper {
 		byte[] array = new byte[] { data[counter.getAndIncrement()], data[counter.getAndIncrement()] };
 		if (data[counter.intValue()] == 0) {
 			counter.getAndIncrement();
-		} else {
+		} else
 			System.out.println("Could not parse type of request. Data was invalid.");
-		}
 		return array;
 	}
 
@@ -178,14 +178,19 @@ public final class Helper {
 	}
 
 	private static <T extends Enum<T>> Enum<?> ParseEnum(byte[] data, Class<T> clazz, MutInt counter) {
+
 		Enum<?>[] enums = clazz.getEnumConstants();
 		if ((((int) data[counter.intValue()]) - 1) < enums.length) {
 			return enums[((int) data[counter.getAndAdd(2)]) - 1];
 		}
 
-		System.out.println("Enum parsing failed. Invalid data or non-defined ENUM.");
-		System.exit(1);
+		// System.out.println("Enum parsing failed. Invalid data or non-defined ENUM.");
+		// System.exit(1);
+		else {
+			System.out.println("Could not parse Enum; Invalid data or Enum does not exist.");
+		}
 		return null;
+
 	}
 
 	private static void PopulateSourceDest(byte[] data, Request request, MutInt counter) {
@@ -228,6 +233,7 @@ public final class Helper {
 	}
 
 	private static void PopulateOnType(byte[] data, Request request, MutInt counter) {
+
 		if (request instanceof DirectionLampRequest) {
 			/* Direction Lamp Request is of the form 0DIR0STATUS0ACTION */
 			DirectionLampRequest req = (DirectionLampRequest) request;
@@ -245,7 +251,7 @@ public final class Helper {
 			ElevatorDoorRequest req = (ElevatorDoorRequest) request;
 			if (req.getRequestAction() == null)
 				System.out.println("Received request with no data. Could not populate.");
-			System.exit(1);
+			// System.exit(1);
 			Populate(data, req.getElevatorName(), counter);
 			PopulateEnum(data, req.getRequestAction(), counter);
 		} else if (request instanceof ElevatorLampRequest) {

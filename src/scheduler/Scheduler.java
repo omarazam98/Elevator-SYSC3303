@@ -72,12 +72,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	 */
 	public void init(HashMap<String, HashMap<String, String>> elevatorConfiguration,
 			HashMap<String, HashMap<String, String>> floorConfigurations) {
-		// Initializing data structures for floors
-		for (String floorName : floorConfigurations.keySet()) {
-			HashMap<String, String> conf = floorConfigurations.get(floorName);
 
-			this.portsByFloorName.put(floorName, Integer.parseInt(conf.get("port")));
-		}
 		// Initializing data structures for the elevators
 		for (String currentElevator : elevatorConfiguration.keySet()) {
 			HashMap<String, String> config = elevatorConfiguration.get(currentElevator);
@@ -91,6 +86,12 @@ public class Scheduler implements Runnable, ElevatorEvents {
 							SystemEnumTypes.ElevatorCurrentStatus.STOP, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN,
 							floorConfigurations.size()));
 
+		}
+		// Initializing data structures for floors
+		for (String floorName : floorConfigurations.keySet()) {
+			HashMap<String, String> conf = floorConfigurations.get(floorName);
+
+			this.portsByFloorName.put(floorName, Integer.parseInt(conf.get("port")));
 		}
 
 	}
@@ -148,6 +149,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		MakeTrip requestedTrip = new MakeTrip(currentFloorNumber, destinationFloorNumber);
 		// check if any elevator in motion can accomplish the trip request by re-routing
 		for (String elevatorName : monitorByElevatorName.keySet()) {
+			System.out.println("Got elevator..: " + elevatorName);
 			if (this.assignTripToInServiceElevator(elevatorName, requestedTrip)) {
 				this.toString("The " + elevatorName + " will serve the request: " + requestedTrip);
 				// Send event to elevator to light floor button for new destination.

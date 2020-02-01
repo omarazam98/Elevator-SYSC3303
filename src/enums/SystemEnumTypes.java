@@ -2,33 +2,26 @@ package enums;
 
 public class SystemEnumTypes {
 	public enum RequestEvent {
-		SENT, RECEIVED
+		SENT, RECEIVED;
 	}
 
 	/*
 	 * public enum DoorState { OPENED, CLOSED }
 	 */
 	public enum FloorDirectionLampStatus {
-		ON, OFF
+		ON, OFF;
 	}
 
 	public enum Direction {
-		UP, DOWN, STAY
+		UP, DOWN, STAY;
 	}
 
 	public enum ElevatorCurrentStatus {
-		MOVE, STOP
+		MOVE, STOP;
 	}
 
 	public enum ElevatorCurrentDoorStatus {
-		OPEN, CLOSE
+		OPEN, CLOSE;
 	}
-	/*
-	 * public enum RequestType {
-	 * FLOOREDIRECTIONLAMP,FLOORBUTTON,ELEVATORARRIVAL,//for floor
-	 * ELEVATORLAMP,ELEVATORDOOR,ELEVATORMOTOR// for elevator
-	 * 
-	 * }
-	 */
 
 }

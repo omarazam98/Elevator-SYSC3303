@@ -2,8 +2,6 @@ package requests;
 
 import java.util.Date;
 
-import enums.SystemEnumTypes;
-
 public class Request {
 	private Date time;
 	private int floor;
@@ -78,6 +76,9 @@ public class Request {
 
 	public void setSource(String sourceName) {
 		source = sourceName;
+	}
+	public Date getTime() {
+		return time;
 	}
 
 }

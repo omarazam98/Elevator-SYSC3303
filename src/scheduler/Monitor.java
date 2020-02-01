@@ -94,7 +94,7 @@ public class Monitor {
 				}
 				break;
 			case DOWN:
-				if (this.elevatorCurrentState.getCurrentFloor() < this.getLowestScheduledFloor()) {
+				if (this.elevatorCurrentState.getCurrentFloor() < this.getHighestScheduledFloor()) {
 					nextDirection = SystemEnumTypes.Direction.UP;
 				} else {
 					nextDirection = SystemEnumTypes.Direction.DOWN;
@@ -103,6 +103,23 @@ public class Monitor {
 			}
 		}
 		return nextDirection;
+	}
+
+	private Integer getHighestScheduledFloor() {
+		HashSet<Integer> allStops = new HashSet<Integer>();
+		allStops.addAll(requestFloor);
+		allStops.addAll(destinationFloor);
+
+		Iterator<Integer> iterator = allStops.iterator();
+		Integer currentHighestFloor = iterator.next();
+		while (iterator.hasNext()) {
+			Integer nextFloorToCompare = iterator.next();
+			if (nextFloorToCompare > currentHighestFloor) {
+				currentHighestFloor = nextFloorToCompare;
+			}
+		}
+
+		return currentHighestFloor;
 	}
 
 	private int getLowestScheduledFloor() {
@@ -150,9 +167,17 @@ public class Monitor {
 		// remove it
 		// from the queue.
 		if (this.isPickupFloor(this.elevatorCurrentState.getCurrentFloor())) {
-			this.isPickupFloor(this.elevatorCurrentState.getCurrentFloor());
+			this.removePickupFloor(this.elevatorCurrentState.getCurrentFloor());
 		}
 		return completedTrips;
+	}
+
+	private boolean removePickupFloor(int floor) {
+		if (this.requestFloor.contains(floor)) {
+			this.requestFloor.remove(floor);
+			return true;
+		}
+		return false;
 	}
 
 	private boolean isDestinationFloor(int currentFloor) {
