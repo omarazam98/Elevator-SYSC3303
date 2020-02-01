@@ -20,10 +20,10 @@ scheduler
 *Monitor.java: used to update the current state of elevator and stores list of trips'information
 *Scheduler.java: accepting requests and sending events and commands(requests) as reponds
 
-server
+server    
 *Server.java: uses socket to receive and send packets on specific port
 
-info
+info    
 *Helper.java: transfer between requests and datagram packet
 *MutInt.java
 
