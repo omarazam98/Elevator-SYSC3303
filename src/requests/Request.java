@@ -2,7 +2,7 @@ package requests;
 
 import java.util.Date;
 
-import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.RequestType;
 
 public class Request {
 	private Date time;
@@ -12,11 +12,12 @@ public class Request {
 	private String destination;
 	private byte[] requestType;
 	private String source;
-
+	private RequestType type;
+	
 	protected Request() {
-
+		
 	}
-
+    
 	protected Request(String source, String destination) {
 		this.destination = destination;
 		this.source = source;
@@ -27,6 +28,14 @@ public class Request {
 		this.floor = floor;
 		this.direction = direction;
 		this.carButton = carButton;
+	}
+	
+	public Request(Date time, int floor, String direction, int carButton, RequestType type) {
+		this.time = time;
+		this.floor = floor;
+		this.direction = direction;
+		this.carButton = carButton;
+		this.type = type;
 	}
 
 	public void setFloor(int floor) {
@@ -78,6 +87,9 @@ public class Request {
 
 	public void setSource(String sourceName) {
 		source = sourceName;
+	}
+	public RequestType getType() {
+		return this.type;
 	}
 
 }
