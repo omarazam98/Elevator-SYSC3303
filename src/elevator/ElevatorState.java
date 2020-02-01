@@ -36,52 +36,55 @@ public class ElevatorState {
 		}
 
 	}
-
+    // get start floor
 	public int getStartFloor() {
 		return this.startFloor;
 	}
-
+	// set start floor
 	public void setStartFloor(int start) {
 		this.startFloor = start;
 
 	}
-
+	// get current floor
 	public int getCurrentFloor() {
 		return this.currentFloor;
 	}
-
+	// set current floor
 	public void setCurrentFloor(int i) {
 		this.currentFloor = i;
 	}
-
+	// get current elevator direction 
 	public Direction getDirection() {
 		return this.direction;
 	}
-
+	// set current elevator direction 
 	public void setDirection(Direction direction) {
 		this.direction = direction;
 	}
-
+    //get elevator status is moving or stay
 	public ElevatorStatus getCurrentStatus() {
 		return this.status;
 	}
-
+	//set elevator status is moving or stay
 	public void setStatus(ElevatorStatus status) {
 		this.status = status;
 	}
-
+	 //get elevator door status is close or open
 	public ElevatorDoorStatus getDoorStatus() {
 		return doorStatus;
 	}
-
+	 //set elevator door status is close or open
 	public void setDoorStatus(ElevatorDoorStatus doorStatus) {
 		this.doorStatus = doorStatus;
 	}
-
+    // get the highest floor 
 	public int getHighestFloor() {
 		return this.totalNum;
 	}
-
+	// set the highest floor 
+	public void setHighestFloor(int i) {
+		this.totalNum = i;
+	}
 	public void toggleLamp(int floor, boolean toggle) {
 		lamps.put(floor, toggle);
 	}

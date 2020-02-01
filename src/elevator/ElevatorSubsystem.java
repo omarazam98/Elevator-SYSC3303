@@ -44,13 +44,13 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		serverThread.start();
 	}
 
-	
+	// receive request event from the event queue
 	public synchronized void receiveEvent(Request event) {
 		events.add(event);
 		this.notifyAll();
 	}
 
-	
+	// get the next request from event queue
 	public synchronized Request getNextEvent() {
 		while (events.isEmpty()) {
 			try {
@@ -72,7 +72,9 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		this.state.toggleLamp(floor, b);
 	}
 
-	// toggles lamp state dependent on floor provided
+	/*
+	 * Handle elevator to stop
+	 */
 	private void elevatorStop() {
 		this.state.setDirection(Direction.STAY);
 		this.state.setStatus(ElevatorStatus.STOP);
@@ -82,7 +84,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		this.Output(RequestEvent.SENT, "Scheduler", "Stopped at " + this.state.getCurrentFloor() + ".");
 		this.sendServer(request);
 	}
-
+	
+	/*
+	 * Handle elevator to move up
+	 */
 	private void elevatorUp() {
 		if (this.state.getDoorStatus() != SystemEnumTypes.ElevatorDoorStatus.OPEN) {
 			this.state.setDirection(SystemEnumTypes.Direction.UP);
@@ -102,6 +107,9 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		}
 	}
 
+	/*
+	 * Handle elevator to move down
+	 */
 	private void elevatorDown() {
 		if (this.state.getDoorStatus() != ElevatorDoorStatus.OPEN) {
 			this.state.setDirection(Direction.DOWN);
@@ -121,7 +129,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		}
 
 	}
-
+	
+	/*
+	 * Handle elevator door to open
+	 */
 	private void doorOpen() {
 		this.state.setDoorStatus(ElevatorDoorStatus.OPEN);
 		this.Output(RequestEvent.SENT, "Scheduler", "Doors are opened.");
@@ -129,7 +140,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				ElevatorDoorStatus.OPEN);
 		this.sendServer(request);
 	}
-
+	
+	/*
+	 * Handle elevator door to close
+	 */
 	private void doorClose() {
 		this.state.setDoorStatus(SystemEnumTypes.ElevatorDoorStatus.CLOSE);
 		this.Output(RequestEvent.SENT, "Scheduler", "Doors are closed.");
@@ -137,7 +151,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				SystemEnumTypes.ElevatorDoorStatus.CLOSE);
 		this.sendServer(request);
 	}
-
+	
+	/*
+	 * Send request to server
+	 */
 	private void sendServer(Request request) {
 		try {
 			this.server.send(request, InetAddress.getLocalHost(), this.schedulerPort);
@@ -145,12 +162,17 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			e.printStackTrace();
 		}
 	}
-
+	
+	/*
+	 * Out print the elevator movement with accurate time
+	 */
 	private void Output(String output) {
 		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
 				+ this.name + " : " + output);
 	}
-
+	/*
+	 * Out print the transmission of request between server and elevator subsystem with accurate time
+	 */
 	private void Output(RequestEvent event, String receiver, String output) {
 		if (event.equals(RequestEvent.SENT)) {
 			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
@@ -160,8 +182,12 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 					+ this.name + " : [EVENT RECEIVED FROM " + receiver + "] " + output);
 		}
 	}
+	/*
+	 * Handle the request and decide the elevator movement
+	 */
 	private void handleRequest(Request event) {
-		// switch statement corresponding to different "event handlers"
+		
+		// switch statement corresponding to different kinds of request
 		if (event instanceof ElevatorArrivalRequest) {
 			ElevatorArrivalRequest request = (ElevatorArrivalRequest) event;
 			this.Output("Sending arrival notice.");
