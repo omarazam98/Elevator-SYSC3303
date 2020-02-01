@@ -15,13 +15,7 @@ public class FloorButtonRequest extends Request {
 	// for parsing the input form the configuraiton file
 	private static byte[] RequestType = new byte[] { 1, 6 };
 
-	/**
-	 * 
-	 * @param time             {@link FloorButtonRequest#buttonPressTime}
-	 * @param FloorName        {@link FloorButtonRequest#currentFloorName}
-	 * @param Direction        {@link FloorButtonRequest#pressedButtonDirection}
-	 * @param destinationFloor {@link FloorButtonRequest#DestinationFloor}
-	 */
+	
 	public FloorButtonRequest(String time, String FloorName, SystemEnumTypes.Direction Direction,
 			String destinationFloor) {
 		this.setRequestType(RequestType);

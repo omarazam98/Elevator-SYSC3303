@@ -149,7 +149,6 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		MakeTrip requestedTrip = new MakeTrip(currentFloorNumber, destinationFloorNumber);
 		// check if any elevator in motion can accomplish the trip request by re-routing
 		for (String elevatorName : monitorByElevatorName.keySet()) {
-			System.out.println("Got elevator..: " + elevatorName);
 			if (this.assignTripToInServiceElevator(elevatorName, requestedTrip)) {
 				this.toString("The " + elevatorName + " will serve the request: " + requestedTrip);
 				// Send event to elevator to light floor button for new destination.

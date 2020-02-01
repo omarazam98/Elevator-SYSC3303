@@ -31,6 +31,7 @@ public class Server implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
+		
 	}
 
 	/**

@@ -1,7 +1,6 @@
 package requests;
 
 import enums.SystemEnumTypes;
-import enums.SystemEnumTypes.FloorDirectionLampStatus;
 
 public class FloorLampRequest extends LampRequest {
 	

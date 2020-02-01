@@ -5,9 +5,6 @@ public class SystemEnumTypes {
 		SENT, RECEIVED;
 	}
 
-	/*
-	 * public enum DoorState { OPENED, CLOSED }
-	 */
 	public enum FloorDirectionLampStatus {
 		ON, OFF;
 	}

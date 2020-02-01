@@ -242,7 +242,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				.getAllFloorSubsytemConfigurations();
 
 		int temp = 0;
-		for (String floor : floorConfigurations.keySet()) {
+		for (@SuppressWarnings("unused") String floor : floorConfigurations.keySet()) {
 			// find amount of floors
 			temp+= temp;
 		}
