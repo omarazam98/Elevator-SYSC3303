@@ -2,6 +2,10 @@ package requests;
 
 import java.util.Date;
 
+/**
+ * This class deals with the requests that are being made
+ *
+ */
 public class Request {
 	private Date time;
 	private int floor;
@@ -77,6 +81,7 @@ public class Request {
 	public void setSource(String sourceName) {
 		source = sourceName;
 	}
+
 	public Date getTime() {
 		return time;
 	}

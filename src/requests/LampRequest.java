@@ -2,11 +2,13 @@ package requests;
 
 import enums.SystemEnumTypes;
 
+/**
+ * This class deals with the LampRequest
+ *
+ */
 public class LampRequest extends Request {
 
-	/**
-	 * The action or status of the lamp
-	 */
+	// lamp current status
 	private SystemEnumTypes.FloorDirectionLampStatus CurrentStatus;
 
 	public LampRequest(SystemEnumTypes.FloorDirectionLampStatus status) {

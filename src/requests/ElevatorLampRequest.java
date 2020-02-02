@@ -17,34 +17,31 @@ public class ElevatorLampRequest extends LampRequest {
 	/**
 	 * Create a request to change the status of a button lamp of a given elevator
 	 * 
-	 * @param button {@link ElevatorLampRequest#ElevatorButton}
-	 * @param status {@link LampRequest#getCurrentStatus()}
+	 * @param button the elevator button
+	 * @param status the elevaotr current state
 	 */
 	public ElevatorLampRequest(String button, SystemEnumTypes.FloorDirectionLampStatus status) {
 		super(status);
 		this.setRequestType(RequestType);
 		this.ElevatorButton = button;
-		// TODO Auto-generated constructor stub
 	}
 
-	/**
-	 * {@link ElevatorLampRequest#ElevatorButton}
-	 * 
-	 * @return
+	/*
+	 * @return the current elevator button
 	 */
 	public String getElevatorButton() {
 		return ElevatorButton;
 	}
 
 	/**
-	 * {@link ElevatorLampRequest#ElevatorButton}
+	 * sets the elevator button
 	 */
 	public void setElevatorButton(String elevatorButton) {
 		ElevatorButton = elevatorButton;
 	}
 
 	/**
-	 * {@link ElevatorLampRequest#RequestType}
+	 * gets the request type
 	 */
 	public static byte[] getRequestType() {
 		return RequestType;

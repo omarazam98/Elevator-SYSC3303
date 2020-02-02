@@ -25,6 +25,22 @@ import requests.FloorLampRequest;
 import requests.Request;
 import server.Server;
 
+/**
+ * This class deals with the scheduler system and is responsible for creating
+ * instance of it.
+ * 
+ * It ensure all trip requests are auctioned in a timely manner, ensuring none
+ * of them wait indefinitely. The scheduler maintains elevator subsystem state
+ * at any given time, this includes: - Elevator locations, directions, status,
+ * doors
+ *
+ * It schedules events required for the complete system. The scheduler is
+ * responsible for: - maintaining queue's for trip requests received for
+ * elevators - ordering and sorting of elevators operations including: motor
+ * state, lamps state, doors state
+ *
+ *
+ */
 public class Scheduler implements Runnable, ElevatorEvents {
 
 	private String name;

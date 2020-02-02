@@ -2,6 +2,10 @@ package requests;
 
 import enums.SystemEnumTypes;
 
+/**
+ * This class deals with the FloorButtonRequests
+ *
+ */
 public class FloorButtonRequest extends Request {
 
 	// the time for the button press
@@ -12,10 +16,17 @@ public class FloorButtonRequest extends Request {
 	private SystemEnumTypes.Direction pressedButtonDirection;
 	// the final floor where the user wants to go
 	private String DestinationFloor;
-	// for parsing the input form the configuraiton file
+	// for parsing the input form the configuration file
 	private static byte[] RequestType = new byte[] { 1, 6 };
 
-	
+	/**
+	 * Constructor
+	 * 
+	 * @param time             the request time
+	 * @param FloorName        the floor name
+	 * @param Direction        the direction to move
+	 * @param destinationFloor the destination floor
+	 */
 	public FloorButtonRequest(String time, String FloorName, SystemEnumTypes.Direction Direction,
 			String destinationFloor) {
 		this.setRequestType(RequestType);

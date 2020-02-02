@@ -17,21 +17,17 @@ public final class Helper {
 
 	public static final int buffer_size = 1024; // Max information to be contained in a datagram packet
 
-	// TODO modify it..
 	/**
 	 * Creates a datagram packet from a request class
 	 * 
 	 * @param request Request create a packet for
-	 * @return Datagram packet containing the data, ready to send (does not contain
-	 *         host or port)
+	 * @return Datagram packet containing the data, ready to send
 	 * @throws InvalidRequestException In case the request contains null
 	 *                                 information, it will be invalid
 	 */
 	public static DatagramPacket CreateRequest(Request request) {
 		MutInt counter = new MutInt(0);
 		byte[] data = new byte[buffer_size];
-
-		/* Populate a general request */
 		// add initial 0 byte
 		data[counter.getAndIncrement()] = 0;
 		// populate optional params
@@ -57,8 +53,6 @@ public final class Helper {
 	 */
 	public static Request ParseRequest(DatagramPacket packet) {
 		byte[] data = packet.getData();
-		// int data_length = packet.getLength();
-		// if(data.length != data_length) System.out.println();
 		MutInt counter = new MutInt(0);
 		if (data[counter.getAndIncrement()] != 0) {
 			System.out.println("Could not parse data. Invalid request.");
@@ -81,6 +75,9 @@ public final class Helper {
 			request.setDestination(arr[1]);
 	}
 
+	/**
+	 * source and destination parser
+	 */
 	private static String[] ParseSrcDest(byte[] data, MutInt counter) {
 		boolean IncludeSrcName = RTF(data[counter.getAndAdd(2)]), IncludeDestName = RTF(data[counter.getAndAdd(2)]);
 
@@ -99,6 +96,9 @@ public final class Helper {
 		return res;
 	}
 
+	/**
+	 * parser for the request type
+	 */
 	private static Request ParseOnType(byte[] data, byte[] rt, MutInt counter) {
 		Request request = null;
 		if (Arrays.equals(rt, DirectionLampRequest.getRequestType())) {
@@ -162,6 +162,9 @@ public final class Helper {
 		return array;
 	}
 
+	/**
+	 * parser for the string
+	 */
 	private static String ParseString(byte[] data, MutInt counter) {
 		String ret = "";
 		if (data[counter.intValue()] != 0) {
@@ -193,6 +196,9 @@ public final class Helper {
 
 	}
 
+	/**
+	 * populates the source and the destinaiton
+	 */
 	private static void PopulateSourceDest(byte[] data, Request request, MutInt counter) {
 
 		boolean IncludeSrcName = request.getSource() != null && !request.getSource().isEmpty(),
@@ -213,6 +219,9 @@ public final class Helper {
 		}
 	}
 
+	/*
+	 * true and false value
+	 */
 	private static String TF(boolean tf) {
 		if (tf)
 			return "T";
@@ -220,6 +229,9 @@ public final class Helper {
 			return "F";
 	}
 
+	/**
+	 * check for true and false
+	 */
 	private static boolean RTF(byte tf) {
 		if (tf == 'T')
 			return true;
@@ -227,6 +239,9 @@ public final class Helper {
 			return false;
 	}
 
+	/**
+	 * populates the enums
+	 */
 	private static void PopulateEnum(byte[] data, Enum<?> E, MutInt counter) {
 		data[counter.getAndIncrement()] = (byte) (E.ordinal() + 1); // add 1 to avoid 0-ordinal values
 		data[counter.getAndIncrement()] = 0;
@@ -280,10 +295,7 @@ public final class Helper {
 	}
 
 	/**
-	 * 
-	 * @param data
-	 * @param request
-	 * @param counter
+	 * populates the type
 	 */
 	private static void PopulateType(byte[] data, Request request, MutInt counter) {
 		byte[] TypeCode = request.IGetRequestType();

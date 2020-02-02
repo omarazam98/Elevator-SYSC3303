@@ -21,8 +21,10 @@ import enums.SystemEnumTypes.ElevatorCurrentStatus;
 import enums.SystemEnumTypes.RequestEvent;
 
 /**
- * This is the main class for the elevator subsystem and all other classes communicate with it
- * This class is responsible for the elevator system management
+ * This is the main class for the elevator subsystem and all other classes
+ * communicate with it This class is responsible for the elevator system
+ * management
+ * 
  * @author JCS
  *
  */
@@ -36,14 +38,26 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	private int schedulerPort;
 	private String name;
 
+	/**
+	 * The constructor
+	 * 
+	 * @param name          the elevator name
+	 * @param port          the elevator port
+	 * @param start         the starting floor of the elevator
+	 * @param schedulerPort the scheduler port
+	 * @param totalNum      the total number of the floors
+	 */
 	public ElevatorSubsystem(String name, int port, int start, int schedulerPort, int totalNum) {
 		this.name = name;
 		this.events = new LinkedList<Request>();
-		this.state = new ElevatorState(start, start, Direction.STAY,ElevatorCurrentStatus.STOP, ElevatorCurrentDoorStatus.OPEN, totalNum);
+		this.state = new ElevatorState(start, start, Direction.STAY, ElevatorCurrentStatus.STOP,
+				ElevatorCurrentDoorStatus.OPEN, totalNum);
 		this.schedulerPort = schedulerPort;
 
-		// Creating a server for current instance of the ElevatorSubSystem in a new thread.
-		// When this server receives requests, they will be added to the queue for the current
+		// Creating a server for current instance of the ElevatorSubSystem in a new
+		// thread.
+		// When this server receives requests, they will be added to the queue for the
+		// current
 		// SlevatorSubsystem instance.
 		server = new Server(this, port, this.debug);
 		serverThread = new Thread(server, name);
@@ -58,7 +72,9 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		this.notifyAll();
 	}
 
-	// get the next request from event queue
+	/**
+	 * get the next request from event queue
+	 */
 	public synchronized Request getNextEvent() {
 		while (events.isEmpty()) {
 			try {
@@ -69,13 +85,18 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		}
 		return events.poll();
 	}
-	//get the name of the elevator e.g., E1, E2 etc
+
+	// get the name of the elevator e.g., E1, E2 etc
 	public String getName() {
 		return this.name;
 	}
 
-	
-	// toggles lamp state dependent on floor provided
+	/**
+	 * toggles lamp state dependent on floor provided
+	 * 
+	 * @param floor the floor
+	 * @param b     the lamp state
+	 */
 	private void toggleLamp(int floor, Boolean b) {
 		this.state.toggleLamp(floor, b);
 	}
@@ -92,9 +113,9 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		this.toString(RequestEvent.SENT, "Scheduler", "Stopped at " + this.state.getCurrentFloor() + ".");
 		this.sendServer(request);
 	}
-	
+
 	/*
-	 * Handle elevator to move up
+	 * Deals with the elevator move up event
 	 */
 	private void elevatorUp() {
 		if (this.state.getDoorStatus() != SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN) {
@@ -107,8 +128,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				e.printStackTrace();
 			}
 			this.state.setCurrentFloor(this.state.getCurrentFloor() + 1);
-			this.toString(RequestEvent.SENT, "Scheduler",
-					"Arriving at floor " + this.state.getCurrentFloor() + ".");
+			this.toString(RequestEvent.SENT, "Scheduler", "Arriving at floor " + this.state.getCurrentFloor() + ".");
 			ElevatorArrivalRequest request = new ElevatorArrivalRequest(this.name,
 					Integer.toString(this.state.getCurrentFloor()));
 			this.sendServer(request);
@@ -116,7 +136,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	}
 
 	/*
-	 * Handle elevator to move down
+	 * deals with the elevator move down event
 	 */
 	private void elevatorDown() {
 		if (this.state.getDoorStatus() != ElevatorCurrentDoorStatus.OPEN) {
@@ -129,28 +149,26 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				e.printStackTrace();
 			}
 			this.state.setCurrentFloor(this.state.getCurrentFloor() - 1);
-			this.toString(RequestEvent.SENT, "Scheduler",
-					"Arriving at floor " + this.state.getCurrentFloor() + ".");
+			this.toString(RequestEvent.SENT, "Scheduler", "Arriving at floor " + this.state.getCurrentFloor() + ".");
 			ElevatorArrivalRequest request = new ElevatorArrivalRequest(this.name,
 					Integer.toString(this.state.getCurrentFloor()));
 			this.sendServer(request);
 		}
 
 	}
-	
+
 	/*
-	 * Handle elevator door to open
+	 * Deals with the elevator door open event
 	 */
 	private void doorOpen() {
 		this.state.setDoorStatus(ElevatorCurrentDoorStatus.OPEN);
 		this.toString(RequestEvent.SENT, "Scheduler", "Doors are opened.");
-		ElevatorDoorRequest request = new ElevatorDoorRequest(this.name,
-				ElevatorCurrentDoorStatus.OPEN);
+		ElevatorDoorRequest request = new ElevatorDoorRequest(this.name, ElevatorCurrentDoorStatus.OPEN);
 		this.sendServer(request);
 	}
-	
+
 	/*
-	 * Handle elevator door to close
+	 * Deals with the elevator door close event
 	 */
 	private void doorClose() {
 		this.state.setDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
@@ -159,7 +177,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
 		this.sendServer(request);
 	}
-	
+
 	/*
 	 * Send request to server
 	 */
@@ -170,16 +188,18 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/*
-	 * Out print the elevator movement with accurate time
+	 * Prints the elevator movement with accurate time
 	 */
 	private void toString(String output) {
 		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
 				+ this.name + " : " + output);
 	}
+
 	/*
-	 * Out print the transmission of request between server and elevator subsystem with accurate time
+	 * Prints the requests as the jump between the server and elevator subsystem
+	 * with accurate time
 	 */
 	private void toString(RequestEvent event, String receiver, String output) {
 		if (event.equals(RequestEvent.SENT)) {
@@ -190,11 +210,12 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 					+ this.name + " : [EVENT RECEIVED FROM " + receiver + "] " + output);
 		}
 	}
+
 	/*
-	 * Handle the request and decide the elevator movement
+	 * Deals with the requests and decide the elevator movements
 	 */
 	private void handleRequest(Request event) {
-		
+
 		// switch statement corresponding to different kinds of request
 		if (event instanceof ElevatorArrivalRequest) {
 			ElevatorArrivalRequest request = (ElevatorArrivalRequest) event;
@@ -229,32 +250,40 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		}
 	}
 
-		@Override
-		/**
-		 * thread run
-		 */
-		public void run() {
-			while (true) {
-				this.handleRequest(this.getNextEvent());
-			}
+	@Override
+	/**
+	 * thread run
+	 */
+	public void run() {
+		while (true) {
+			this.handleRequest(this.getNextEvent());
 		}
+	}
+
+	/**
+	 * The main method responsible for creating an instance of the entire
+	 * ElevatorSubSystem
+	 */
 	public static void main(String[] args) {
-		// This will return a Map of Maps. First key -> elevator Name, Value -> map of
-		// all attributes for that elevator (as per config.xml)
+		// This will return a Map of Maps. Parent key is elevator Name, and the value is
+		// map of
+		// attributes for that particular elevator instance in accordance to the
+		// config.xml file
 		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration
 				.getAllElevatorSubsystemConfigurations();
 
-		// This will return a Map of all attributes for the Scheduler (as per
-		// config.xml)
+		// This will return a Map of all attributes for the Scheduler in accorddance to
+		// the config.xml)
 		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
 
 		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
 				.getAllFloorSubsytemConfigurations();
 
 		int temp = 0;
-		for (@SuppressWarnings("unused") String floor : floorConfigurations.keySet()) {
+		for (@SuppressWarnings("unused")
+		String floor : floorConfigurations.keySet()) {
 			// find amount of floors
-			temp+= temp;
+			temp += temp;
 		}
 
 		// Iterate through each elevator and create an instance of an ElevatorSubsystem

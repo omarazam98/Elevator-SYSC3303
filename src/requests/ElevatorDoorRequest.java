@@ -17,9 +17,6 @@ public class ElevatorDoorRequest extends Request {
 
 	/**
 	 * Scheduler calls this to give the elevator an action
-	 * 
-	 * @param name
-	 * @param status
 	 */
 	public ElevatorDoorRequest(String name, SystemEnumTypes.ElevatorCurrentDoorStatus action) {
 		this.setRequestType(RequestType);
@@ -27,22 +24,37 @@ public class ElevatorDoorRequest extends Request {
 		this.RequestAction = action;
 	}
 
+	/**
+	 * gets the name of the elevator name
+	 */
 	public String getElevatorName() {
 		return ElevatorName;
 	}
 
+	/**
+	 * sets the elevator name
+	 */
 	public void setElevatorName(String elevatorName) {
 		ElevatorName = elevatorName;
 	}
 
+	/**
+	 * gets the Request Action
+	 */
 	public SystemEnumTypes.ElevatorCurrentDoorStatus getRequestAction() {
 		return RequestAction;
 	}
 
+	/**
+	 * sets the request Action
+	 */
 	public void setRequestAction(SystemEnumTypes.ElevatorCurrentDoorStatus requestAction) {
 		RequestAction = requestAction;
 	}
 
+	/**
+	 * get the request type
+	 */
 	public static byte[] getRequestType() {
 		return RequestType;
 	}

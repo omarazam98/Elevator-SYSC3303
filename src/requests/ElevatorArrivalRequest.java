@@ -2,62 +2,54 @@ package requests;
 
 public class ElevatorArrivalRequest extends Request {
 
-	/**
-	 * Name of the elevator arriving
-	 */
 	private String ElevatorName;
-	
-	/**
-	 * Name of the floor the elevator is arriving at
-	 */
 	private String FloorName;
-	
-	/**
-	 * Type of request for parsing purposes
-	 */
-	private static byte[] RequestType = new byte[] {1,2};
-	
+
+	// request type for parsing purposes
+	private static byte[] RequestType = new byte[] { 1, 2 };
+
 	/**
 	 * Create a request for an elevator's arrival at a floor
-	 * @param Elevator {@link ElevatorArrivalRequest#ElevatorName}
-	 * @param Floor {@link ElevatorArrivalRequest#FloorName}
+	 * 
+	 * @param Elevator current elevator name
+	 * @param Floor    current floor name
 	 */
-	public ElevatorArrivalRequest(String Elevator, String Floor){
+	public ElevatorArrivalRequest(String Elevator, String Floor) {
 		this.setRequestType(RequestType);
 		this.ElevatorName = Elevator;
 		this.FloorName = Floor;
 	}
-	
+
 	/**
-	 * {@link ElevatorArrivalRequest#ElevatorName}
+	 * returns the elevator name
 	 */
 	public String getElevatorName() {
 		return ElevatorName;
 	}
 
 	/**
-	 * {@link ElevatorArrivalRequest#ElevatorName}
+	 * sets the elevator name
 	 */
 	public void setElevatorName(String elevatorName) {
 		ElevatorName = elevatorName;
 	}
 
 	/**
-	 * {@link ElevatorArrivalRequest#FloorName}
+	 * gets the floor name
 	 */
 	public String getFloorName() {
 		return FloorName;
 	}
-	
+
 	/**
-	 * {@link ElevatorArrivalRequest#FloorName}
+	 * sets the floor name
 	 */
 	public void setFloorName(String floorName) {
 		FloorName = floorName;
 	}
 
 	/**
-	 * {@link ElevatorArrivalRequest#RequestType}
+	 * returns the request type
 	 */
 	public static byte[] getRequestType() {
 		return RequestType;

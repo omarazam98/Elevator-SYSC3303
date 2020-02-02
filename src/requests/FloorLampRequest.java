@@ -2,22 +2,23 @@ package requests;
 
 import enums.SystemEnumTypes;
 
+/**
+ * This class deals with the FloorLamp requests
+ *
+ */
 public class FloorLampRequest extends LampRequest {
-	
-	/**
-	 * Direction of the floor's button to light up
-	 */
+
+	// direction of the floor's button to light up
 	private SystemEnumTypes.Direction Direction;
-	
-	/**
-	 * Type of request for parsing purposes
-	 */
-	private static byte[] RequestType = new byte[] {1,7};
+
+	// request type for parsing purposes
+
+	private static byte[] RequestType = new byte[] { 1, 7 };
 
 	/**
 	 * 
-	 * @param Direction {@link FloorLampRequest#Direction}
-	 * @param status {@link LampRequest#getCurrentStatus()}
+	 * @param Direction the direction of the floor lamp
+	 * @param status    floor lamp current status
 	 */
 	public FloorLampRequest(SystemEnumTypes.Direction Direction, SystemEnumTypes.FloorDirectionLampStatus status) {
 
@@ -27,25 +28,24 @@ public class FloorLampRequest extends LampRequest {
 	}
 
 	/**
-	 * {@link FloorLampRequest#Direction}
+	 * gets the direction of the floor lamp
 	 */
 	public SystemEnumTypes.Direction getDirection() {
 		return Direction;
 	}
 
 	/**
-	 * {@link FloorLampRequest#Direction}
+	 * sets the direction of the floor lamp
 	 */
 	public void setDirection(SystemEnumTypes.Direction direction) {
 		Direction = direction;
 	}
 
-
 	/**
-	 * {@link FloorLampRequest#RequestType}
+	 * gets the request type
 	 */
 	public static byte[] getRequestType() {
 		return RequestType;
 	}
-	
+
 }

@@ -11,6 +11,12 @@ import elevator.ElevatorSystemConfiguration;
 import info.Helper;
 import requests.Request;
 
+/**
+ * This class is responsible for creating DatagramSocket server responsible for:
+ * - sending the data - receiving the data - getting the data in the bytes
+ * format - printing out the details of the data packet received
+ *
+ */
 public class Server implements Runnable {
 
 	private DatagramSocket receiveSocket;
@@ -24,25 +30,23 @@ public class Server implements Runnable {
 		this.role = elevatorSystemComponent.getName() + "_server";
 		this.debug = debug;
 		try {
-			// Instantiate a socket to be used for receiving packets on specific port.
+			// create an instance of a socket to be used for receiving packets on specific
+			// port.
 			this.receiveSocket = new DatagramSocket(port);
-			// Instantiate a socket to be used for sending and receiving packets
+			// create an instance of a socket to be used for sending and receiving packets
 			this.sendSocket = new DatagramSocket();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	/**
-	 * Send a request packet. Accepts a Request object, uses the Helper to translate
-	 * this into a packet and sends it using the 'sendSocket'. Prints details about
-	 * the packet send event (Leverages printPacketEventDetails()). Socket is not
-	 * closed when send is complete.
-	 * 
-	 * @param request
-	 * @param inetAddress
-	 * @param port
+	 * This method sends a request packet and accepts a Request object. It uses the
+	 * Helper class to convert this into a packet and sends it using the
+	 * 'sendSocket'. It prints the details of every packet being sent using the
+	 * printPacketEventDetails method. The sockets stays open even when the sent is
+	 * complete
 	 */
 	public void send(Request request, InetAddress inetAddress, Integer port) {
 
@@ -53,7 +57,7 @@ public class Server implements Runnable {
 			e.printStackTrace();
 		}
 
-		// Set destination of packet
+		// Sets packet final location
 		packet.setAddress(inetAddress);
 		packet.setPort(port);
 
@@ -61,22 +65,20 @@ public class Server implements Runnable {
 			printPacketEventDetails(ElevatorSystemConfiguration.SEND_PACKET_EVENT, packet, this.sendSocket);
 		}
 
-		// Send packet using sendSocket
+		// Sending the packet
 		try {
 			this.sendSocket.send(packet);
 		} catch (IOException e) {
 			e.printStackTrace();
-			//System.exit(1);
+			// System.exit(1);
 		}
 
 	}
 
 	/**
-	 * Receive a packet, no timeout specified, wait indefinitely. Prints details
-	 * about the packet receive event (Leverages printPacketEventDetails()).
+	 * This method receives a packet and waits indefinitely. It also prints the
+	 * details using the printPacketEventDetails() method
 	 * 
-	 * @param socket
-	 * @return
 	 */
 	public DatagramPacket receive(DatagramSocket socket) {
 		DatagramPacket packet = null;
@@ -86,15 +88,15 @@ public class Server implements Runnable {
 			// Since no timeout was specified, we know this is not a socket time out
 			// exception
 			System.out.println("Unhandled Exception Occurred. Exiting.");
-			//System.exit(1);
+			// System.exit(1);
 		}
 		return packet;
 	}
 
 	/**
-	 * Receive a packet with a timeout specified. Waits for specified timeout.
-	 * Prints details about the packet receive event (Leverages
-	 * printPacketEventDetails()).
+	 * This method is responsible for receiving a packet with a specific timeout. It
+	 * waits till the time is over and prints the details about the received message
+	 * using the printPacketEventDetails() method
 	 * 
 	 * @param socket
 	 * @param timeout - in milliseconds
@@ -111,9 +113,7 @@ public class Server implements Runnable {
 	}
 
 	/**
-	 * 
-	 * @param socket
-	 * @return
+	 * This method is responsible for waiting for a packet
 	 */
 	private DatagramPacket waitForPacket(DatagramSocket socket, int timeout) throws IOException {
 		// Construct a DatagramPacket for receiving packets up to 100 bytes long (the
@@ -137,18 +137,12 @@ public class Server implements Runnable {
 	}
 
 	/**
-	 * Print relevant details about the packet event. Context is specific to whether
-	 * the event is a send or a receive. Displays: - event description & the 'role'
-	 * of the Host the event occurred on. - If sending packet: the internet address
-	 * and target port of the recipient of the packet; as well as the port the
-	 * packet is sent on - If receiving packet: the internet address and source port
-	 * of the sender of the packet; as well as the port the packet is received on -
-	 * length of the packet message (# of bytes) - String representation of the
-	 * packet contents. - byte representation of the packet contents.
-	 * 
-	 * @param send
-	 * @param packet
-	 * @param socket
+	 * THis method prints details about the packet.It shows the event description
+	 * and the role of the Host which caused the event, the IP address and port on
+	 * which the packet was received, the port the packet is sent on(when sending),
+	 * the IP address and source port of the sender and the port the packet is
+	 * received on(when receiving), the length of the packet in terms of bytes, the
+	 * string representation of the packet and the byte representation
 	 */
 	private void printPacketEventDetails(boolean packetEvent, DatagramPacket packet, DatagramSocket socket) {
 		int len = packet.getLength();
@@ -170,11 +164,7 @@ public class Server implements Runnable {
 	}
 
 	/**
-	 * Translates the packet data buffer of bytes into a String representation of
-	 * the byte values.
-	 * 
-	 * @param packet
-	 * @return
+	 * This method converts the bytes to string format
 	 */
 	private String getPacketDataBytesAsString(DatagramPacket packet) {
 		StringBuilder sb = new StringBuilder();

@@ -9,7 +9,7 @@ import elevator.ElevatorState;
 import enums.SystemEnumTypes;
 
 /**
- * This class is responsible to maintain the current state of the elevator and
+ * This class is responsible to maintain the current state of the elevator and a
  * queue containing information regarding the trips. Every time the elevator
  * changes its state, the class shall be updated. The class also determines if
  * for a single Elevator.
@@ -24,6 +24,7 @@ public class Monitor {
 	private ArrayList<MakeTrip> tripRequestCompletionSuccess;
 	private ElevatorState elevatorCurrentState;
 
+	// the constructor
 	public Monitor(String elevatorName, Integer elevatorStartFloorLocation, Integer currentElevatorFloorLocation,
 			SystemEnumTypes.Direction currentElevatorDirection,
 			SystemEnumTypes.ElevatorCurrentStatus currentElevatorStatus,
@@ -49,7 +50,7 @@ public class Monitor {
 	}
 
 	/**
-	 * Add a first trip to the queue. This is to add a trip to an idle elevator.
+	 * Add a first trip to the queue of an idle elevator.
 	 * 
 	 * @param tripRequest
 	 * @return
@@ -65,10 +66,14 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * updates the elevator direction
+	 */
 	public void updateElevatorDirection(SystemEnumTypes.Direction nextDirection) {
 		this.elevatorCurrentState.setDirection(nextDirection);
 	}
 
+	@SuppressWarnings("incomplete-switch")
 	public SystemEnumTypes.Direction getNextElevatorDirection() {
 		SystemEnumTypes.Direction nextDirection = null;
 		// The elevator is assigned the STAY state if there are no trips in queue and it
@@ -84,7 +89,6 @@ public class Monitor {
 				nextDirection = SystemEnumTypes.Direction.STAY;
 			}
 		} else {
-			// TODO once getting other components, change the switch to if and else case
 			switch (this.queueDirection) {
 			case UP:
 				if (this.elevatorCurrentState.getCurrentFloor() > this.getLowestScheduledFloor()) {
@@ -105,6 +109,9 @@ public class Monitor {
 		return nextDirection;
 	}
 
+	/**
+	 * gets the highest floor
+	 */
 	private Integer getHighestScheduledFloor() {
 		HashSet<Integer> allStops = new HashSet<Integer>();
 		allStops.addAll(requestFloor);
@@ -122,6 +129,9 @@ public class Monitor {
 		return currentHighestFloor;
 	}
 
+	/**
+	 * gets the lowest floor
+	 */
 	private int getLowestScheduledFloor() {
 		HashSet<Integer> allStops = new HashSet<Integer>();
 		allStops.addAll(requestFloor);
@@ -139,16 +149,25 @@ public class Monitor {
 		return currentLowestFloor;
 	}
 
+	/**
+	 * updates the elevator door status
+	 */
 	public void updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus updatedDoorState) {
 		this.elevatorCurrentState.setDoorStatus(updatedDoorState);
 
 	}
 
+	/**
+	 * updates the elevaotr status
+	 */
 	public void updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus updatedElevatorStatus) {
 		this.elevatorCurrentState.setStatus(updatedElevatorStatus);
 
 	}
 
+	/**
+	 * checks if the elevator is stopped or not
+	 */
 	public HashSet<MakeTrip> stopOccurred() {
 		HashSet<MakeTrip> completedTrips = new HashSet<MakeTrip>();
 		// If current floor refers to the destination floor, the stop is removed from
@@ -172,6 +191,9 @@ public class Monitor {
 		return completedTrips;
 	}
 
+	/**
+	 * deletes the pickup floor
+	 */
 	private boolean removePickupFloor(int floor) {
 		if (this.requestFloor.contains(floor)) {
 			this.requestFloor.remove(floor);
@@ -180,6 +202,9 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * checks if the current floor is the destination floor or not
+	 */
 	private boolean isDestinationFloor(int currentFloor) {
 		if (this.destinationFloor.contains(currentFloor)) {
 			return true;
@@ -187,6 +212,9 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * removes the destinaiton floor
+	 */
 	private boolean removeDestinationFloor(int currentFloor) {
 		if (this.destinationFloor.contains(currentFloor)) {
 			this.destinationFloor.remove(currentFloor);
@@ -195,6 +223,9 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * removes the trips with the destination floor reached
+	 */
 	private HashSet<MakeTrip> removeTripsWithDestinationFloor(int currentFloor) {
 		HashSet<MakeTrip> completedTrips = new HashSet<MakeTrip>();
 
@@ -214,6 +245,11 @@ public class Monitor {
 		return this.queueDirection;
 	}
 
+	/**
+	 * if an elevaor is moving in the same direction as towards which a button is
+	 * pressed; then it adds it to the queue else it continues its journey
+	 */
+	@SuppressWarnings("incomplete-switch")
 	public boolean addEnRouteTripRequest(MakeTrip tripRequest) {
 		if (!this.isEmpty()) {
 			// Trip is only made if it is in the direction of the elevator motion and is
@@ -234,7 +270,6 @@ public class Monitor {
 				} else {
 					// Check if the elevator has passed the request floor already or not and if so,
 					// do not add it to the request queue.
-					// TODO after getting code, try to convert switch to if and else statements
 					switch (this.queueDirection) {
 					case UP:
 						if (this.elevatorCurrentState.getCurrentFloor() > tripRequest.getUserinitalLocation()) {
@@ -262,19 +297,33 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * gets the elevator floor locaiton
+	 * 
+	 * @return
+	 */
 	public Integer getElevatorFloorLocation() {
 		return this.elevatorCurrentState.getCurrentFloor();
 	}
 
+	/**
+	 * gets the elevator starting location
+	 */
 	public Integer getElevatorStartingFloorLocation() {
 		return this.elevatorCurrentState.getStartFloor();
 	}
 
+	/**
+	 * updates the elevator floor locaiton
+	 */
 	public void updateElevatorFloorLocation(int floorNumber) {
 		this.elevatorCurrentState.setCurrentFloor(floorNumber);
 
 	}
 
+	/**
+	 * checks if the elevator is supposed to stop or not
+	 */
 	public boolean isStopRequired(int floorNumber) {
 		if ((this.isDestinationFloor(floorNumber) && (this.elevatorCurrentState.getDirection() == this.queueDirection))
 				|| ((this.queueDirection == SystemEnumTypes.Direction.STAY)
@@ -286,6 +335,9 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * checks if the current floor is the pick up floor or not
+	 */
 	public boolean isPickupFloor(int floorNumber) {
 		if (this.requestFloor.contains(floorNumber)) {
 			return true;
@@ -293,6 +345,9 @@ public class Monitor {
 		return false;
 	}
 
+	/**
+	 * prints to the console in a specific format
+	 */
 	public String toString() {
 		String s = "";
 		s += "[" + "Elevator name: " + this.currentELevatorName + "\n" + "Current floor: "

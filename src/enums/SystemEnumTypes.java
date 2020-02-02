@@ -1,5 +1,9 @@
 package enums;
 
+/**
+ * This class is a class of enums and contains all the enums that are used
+ * across the project *
+ */
 public class SystemEnumTypes {
 	public enum RequestEvent {
 		SENT, RECEIVED;
@@ -8,7 +12,7 @@ public class SystemEnumTypes {
 	public enum FloorDirectionLampStatus {
 		ON, OFF;
 	}
-
+	
 	public enum Direction {
 		UP, DOWN, STAY;
 	}
