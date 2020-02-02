@@ -9,9 +9,8 @@ MonitorTest.class,
 RequestTest.class,
 MutIntTest.class,
 MakeTripTest.class,
+ElevatorStateTest.class,
 FloorSubSystemTest.class,
-//TestElevatorSubsystem.class,
-//TestScheduler.class,
 })
 
 public class Tests {}

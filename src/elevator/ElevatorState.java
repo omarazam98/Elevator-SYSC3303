@@ -27,7 +27,7 @@ public class ElevatorState {
 	 * Constructor
 	 * @param start the floor on which the elevator is starting its journey
 	 * @param current the current floor of the elevator
-	 * @param direction the direction in which the elevaor is going
+	 * @param direction the direction in which the elevator is going
 	 * @param status the current status
 	 * @param doorStatus the state of the doors
 	 * @param totalNum the total number of floors
