@@ -193,21 +193,19 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		List<FloorSubSystem> floors = new LinkedList<FloorSubSystem>();
 		SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss.mmm");
 
-		// This will return a Map of all attributes for the Scheduler (as per
-		// config.xml)
+		// return a Map of all attributes for the Scheduler
 		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
 
-		// This will return a Map of Maps. First key -> floor Name, Value -> map of
-		// all attributes for that floor (as per config.xml)
+		// return a Map of Maps. First key -> floor Name, Value -> map of all attributes for that floor
 		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
 				.getAllFloorSubsytemConfigurations();
 
 		// Iterate through each floor and create an instance of an floorSubsystem
 		for (String floorName : floorConfigurations.keySet()) {
-			// Get the configuration for this particular 'floorName'
+			// Get the configuration for this floor
 			HashMap<String, String> floorConfiguration = floorConfigurations.get(floorName);
 
-			// Create an instance of floorSubsystem for this 'floorName'
+			// Create an instance of floorSubsystem for this floor
 			FloorSubSystem floorSubsystem = new FloorSubSystem(floorName,
 					Integer.parseInt(floorConfiguration.get("port")),
 					Integer.parseInt(schedulerConfiguration.get("port")));
@@ -217,9 +215,9 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 			Thread floorSubsystemThread = new Thread(floorSubsystem, floorName);
 			floorSubsystemThread.start();
 		}
-
-		List<FloorButtonRequest> requests = readingInputReq("src/resources/requests.txt"); // Retrieve all requests from
-																							// input file
+		
+		// Retrieve all requests from input file
+		List<FloorButtonRequest> requests = readingInputReq("src/resources/requests.txt"); 
 
 		// Sort requests based on time to be sent
 		Collections.sort(requests, new Comparator<FloorButtonRequest>() {
@@ -245,15 +243,13 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 
 		long lastTime = 0;
 
-		for (FloorButtonRequest currRequest : requests) { // Loop over requests
-			for (FloorSubSystem currFloor : floors) { // Loop over floors
-				if (currFloor.getName().equalsIgnoreCase(currRequest.getFloorName())) { // If request is meant for the
-																						// current floor
+		for (FloorButtonRequest currRequest : requests) {
+			for (FloorSubSystem currFloor : floors) {
+				if (currFloor.getName().equalsIgnoreCase(currRequest.getFloorName())) { 
+					// If request is meant for the current floor
+					long currReqTime = (sdf.parse(currRequest.getButtonPressTime())).getTime(); 
 
-					long currReqTime = (sdf.parse(currRequest.getButtonPressTime())).getTime(); // Get time of request
-
-					// Measure time between last request and current, and sleep for the time
-					// difference
+					// Measure time between last request and current, and sleep
 					if (lastTime != 0) {
 						long timeDiff = currReqTime - lastTime;
 						try {
