@@ -173,7 +173,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 			FloorLampRequest currRequest = (FloorLampRequest) request;
 
 			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor "
-					+ floorNum + " : [EVENT RECEIVED FROM Scheduler ] Shut off " + currRequest.getDirec()
+					+ floorNum + " : [EVENT RECEIVED FROM Scheduler ] Shut off " + currRequest.getDirection()
 					+ " direction lamp.");
 			toggleFloorLamp(currRequest.getDirection().toString(), "OFF"); // Turn off button lamp
 		}

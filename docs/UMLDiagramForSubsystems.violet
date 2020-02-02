@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<java version="11.0.4" class="java.beans.XMLDecoder">
+ <object class="com.horstmann.violet.ClassDiagramGraph">
+  <void method="addNode">
+   <object class="com.horstmann.violet.InterfaceNode" id="InterfaceNode0">
+    <void property="methods">
+     <void property="text">
+      <string>+receiveEvent(request: Request): void
++getNextEvent(): Request
++getName(): String</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>«interface»
+ElevatorEvents</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double0">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double0"/>
+      <double>400.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>400.0</double>
+     <double>0.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.ClassNode" id="ClassNode0">
+    <void property="attributes">
+     <void property="text">
+      <string>-server : Server
+-serverThread : Thread
+-events : Queue&lt;Request&gt;
+-state : ElevatorState
+-debug : boolean
+-schedulerPort : int
+-name : String</string>
+     </void>
+    </void>
+    <void property="methods">
+     <void property="text">
+      <string>+ElevatorSubsystem(String: name, int: port, int: start, int: schedulerPort , int: totalNum): void
++receiveEvent(Request: event):void
++getNextEvent(): Request
++getName(): String
+-toggleLamp(floor: int, b:  Boolean)
+-elevatorStop(): void
+-elevatorUp(): void
+-elevatorDown(): void
+-doorOpen(): void
+-doorClose(): void
+-sendServer(Request: request)
+-toString(output: String): void
+-toString(event: RequestEvent, receiver: String, output: String): void
+-handleRequest(event: Request)
++run(): void
+main(args: String[]): void</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>ElevatorSubsystem</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double1">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double1"/>
+      <double>410.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double1"/>
+      <double>500.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>410.0</double>
+     <double>500.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.ClassNode" id="ClassNode1">
+    <void property="attributes">
+     <void property="text">
+      <string>-name : String
+-server : Server
+-serverThread : Thread
+-eventsQueue : Queue&lt;Request&gt;
+-portsByElevatorName : HashMap&lt;String, Integer&gt;
+-portsByFloorName : HashMap&lt;String, Integer&gt;
+-monitorByElevatorName : HashMap&lt;String, Monitor&gt;
+-pendingTripRequests : ArrayList&lt;MakeTrip&gt;
+-debug : boolean</string>
+     </void>
+    </void>
+    <void property="methods">
+     <void property="text">
+      <string>+Scheduler(name: String, port: int, elevatorConfiguration: HashMap&lt;String, HashMap&lt;String, String&gt;&gt;, floorConfigurations: HashMap&lt;String, HashMap&lt;String, String&gt;&gt;): void
++init(elevatorConfiguration: HashMap&lt;String, HashMap&lt;String, String&gt;&gt;, floorConfigurations: HashMap&lt;String, HashMap&lt;String, String&gt;&gt;): void
++run(): void
+-eventHandler(event: Request): void
+-incomingTripRequest(currentFloorNumber: int, destinationFloorNumber: int, direction: Direction): void
+-sendToServer(request: Request, port: int): void
+-assignTripToFreeElevator(elevatorName: String, requestedTrip: MakeTrip): boolean
+-toString(output: String): void
+-toString(received: RequestEvent, target: String, output: String): void
+-assignTripToInServiceElevator(elevatorName: String, tripRequest: MakeTrip): boolean
+-eventElevatorStopped(elevatorName: String): void
+-eventElevatorDoorClosed(elevatorName: String): void
+-sendElevatorMoveEvent(elevatorName: String, nextDirection: Direction): void
+-eventElevatorDoorOpened(elevatorName: String): void
+-assignPendingRequestsToElevator(elevatorName: String): HashSet&lt;MakeTrip&gt;
+-eventElevatorArrivalNotice(elevatorName: String, floorNumber: int): void
++getNextEvent(): Request
++getName(): String
++receiveEvent(request: Request): void
++main(args: String[]): void
+</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>Scheduler</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double2">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double2"/>
+      <double>1010.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double2"/>
+      <double>620.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>1010.0</double>
+     <double>620.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.ClassNode" id="ClassNode2">
+    <void property="attributes">
+     <void property="text">
+      <string>-server : Server
+-floorNum : String
+-eventRequest : Queue&lt;Request&gt;
+-schedulerPort : int
+-debug : boolean
+-floorLamp_UP : FloorDirectionLampStatus
+-floorLamp_DOWN : FloorDirectionLampStatus</string>
+     </void>
+    </void>
+    <void property="methods">
+     <void property="text">
+      <string>+FloorSubSystem(floorNum: String, floorPort: int, schedulerPort: int)
++getNextEvent(): Request
++getName(): String
++toggleFloorLamp(floorLamp: String, lamp: String): boolean
++readingInputReq(fileName: String): List&lt;FloorButtonRequest&gt; 
++receiveEvent(request: Request): void
+-handleRequest(request: Request): void
++run(): void
++main(args: String[]): void</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>FloorSubSystem</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double3">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double3"/>
+      <double>2560.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double3"/>
+      <double>560.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>2560.0</double>
+     <double>560.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.InterfaceNode" id="InterfaceNode1">
+    <void property="methods">
+     <void property="text">
+      <string>+run(): void</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>«interface»
+
+Runnable</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double4">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double4"/>
+      <double>680.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double4"/>
+      <double>20.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>680.0</double>
+     <double>20.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.ClassNode" id="ClassNode3">
+    <void property="attributes">
+     <void property="text">
+      <string>-receiveSocket : DatagramSocket
+-sendSocket : DatagramSocket
+-role : String
+-elevatorSystemComponent : ElevatorEvents
+-debug : boolean</string>
+     </void>
+    </void>
+    <void property="methods">
+     <void property="text">
+      <string>+Server(elevatorSystemComponent: ElevatorEvents, port: int, debug: boolean): void
++send(request: Request, inetAddress: InetAddress, port: Integer): void
++receive(socket: DatagramSocket): DatagramPacket
++receive(socket: DatagramSocket, timeout: int): DatagramPacket
+-waitForPacket(socket: DatagramSocket, timeout: int): DatagramPacket
+-printPacketEventDetails(packetEvent: boolean, packet: DatagramPacket, socket: DatagramSocket): DatagramPacket
+-getPacketDataBytesAsString(packet: DatagramPacket): String
++close(): void
++run(): void</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>Server</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double5">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double5"/>
+      <double>1060.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double5"/>
+      <double>1340.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>1060.0</double>
+     <double>1340.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.ClassNode" id="ClassNode4">
+    <void property="attributes">
+     <void property="text">
+      <string>-userinitalLocation : int
+-userFinalLocation : int
+-elevatorDirection : Direction</string>
+     </void>
+    </void>
+    <void property="methods">
+     <void property="text">
+      <string>+MakeTrip(initialFloor: int, finalFloor: int): void
++getUserinitalLocation(): int
++getUserFinalLocation(): int
++getElevatorDirection(): Direction
++equals(trip: MakeTrip): boolean
++toString(): String</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>MakeTrip</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double6">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double6"/>
+      <double>2520.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double6"/>
+      <double>1000.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>2520.0</double>
+     <double>1000.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="addNode">
+   <object class="com.horstmann.violet.ClassNode" id="ClassNode5">
+    <void property="attributes">
+     <void property="text">
+      <string>currentELevatorName : String
+requestInQueue : LinkedHashSet&lt;MakeTrip&gt;
+destinationFloor : HashSet&lt;Integer&gt;
+requestFloor : HashSet&lt;Integer&gt;
+queueDirection : Direction
+tripRequestCompletionSuccess : ArrayList&lt;MakeTrip&gt;
+elevatorCurrentState : ElevatorState</string>
+     </void>
+    </void>
+    <void property="methods">
+     <void property="text">
+      <string>+Monitor(elevatorName: String, elevatorStartFloorLocation: Integer, currentElevatorFloorLocation: Integer, currentElevatorDirection: Direction, currentElevatorStatus: ElevatorCurrentStatus, currentElevatorDoorStatus: ElevatorCurrentDoorStatus, totalNumberOfFloors: Integer)
++getElevatorStatus(): Object
++isEmpty(): boolean
++addFirstTripRequest(tripRequest: MakeTrip): boolean
++updateElevatorDirection(nextDirection: Direction): coid
++getNextElevatorDirection(): Direction
+-getHighestScheduledFloor(): Integer
+-getLowestScheduledFloor(): int
++updateElevatorDoorStatus(updatedDoorState: ElevatorCurrentDoorStatus): void
++updateElevatorStatus(updatedElevatorStatus: ElevatorCurrentStatus): void
++stopOccurred(): HashSet&lt;MakeTrip&gt;
+-removePickupFloor(floor: int): boolean
+-isDestinationFloor(currentFloor: int): boolean
+-removeDestinationFloor(currentFloor: int): boolean
+-removeTripsWithDestinationFloor(currentFloor: int): HashSet&lt;MakeTrip&gt;
++getQueueDirection(): Object
++addEnRouteTripRequest(tripRequest: MakeTrip): boolean
++getElevatorFloorLocation(): Integer
++getElevatorStartingFloorLocation(): Integer
++updateElevatorFloorLocation(floorNumber: int): void
++isStopRequired(floorNumber: int): boolean
++isPickupFloor(floorNumber: int): boolean
++toString(): String</string>
+     </void>
+    </void>
+    <void property="name">
+     <void property="text">
+      <string>Monitor</string>
+     </void>
+    </void>
+   </object>
+   <object class="java.awt.geom.Point2D$Double" id="Point2D$Double7">
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>x</string>
+     <void method="set">
+      <object idref="Point2D$Double7"/>
+      <double>2640.0</double>
+     </void>
+    </void>
+    <void class="java.awt.geom.Point2D$Double" method="getField">
+     <string>y</string>
+     <void method="set">
+      <object idref="Point2D$Double7"/>
+      <double>1260.0</double>
+     </void>
+    </void>
+    <void method="setLocation">
+     <double>2640.0</double>
+     <double>1260.0</double>
+    </void>
+   </object>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="VHV"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="TRIANGLE"/>
+    </void>
+    <void property="lineStyle">
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/>
+    </void>
+   </object>
+   <object idref="ClassNode0"/>
+   <object idref="InterfaceNode0"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="VHV"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="TRIANGLE"/>
+    </void>
+    <void property="lineStyle">
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/>
+    </void>
+   </object>
+   <object idref="ClassNode1"/>
+   <object idref="InterfaceNode0"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="VHV"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="TRIANGLE"/>
+    </void>
+    <void property="lineStyle">
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/>
+    </void>
+   </object>
+   <object idref="ClassNode2"/>
+   <object idref="InterfaceNode0"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="VHV"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="TRIANGLE"/>
+    </void>
+    <void property="lineStyle">
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/>
+    </void>
+   </object>
+   <object idref="ClassNode0"/>
+   <object idref="InterfaceNode1"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="VHV"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="TRIANGLE"/>
+    </void>
+    <void property="lineStyle">
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/>
+    </void>
+   </object>
+   <object idref="ClassNode1"/>
+   <object idref="InterfaceNode1"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="VHV"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="TRIANGLE"/>
+    </void>
+    <void property="lineStyle">
+     <object class="com.horstmann.violet.LineStyle" field="DOTTED"/>
+    </void>
+   </object>
+   <object idref="ClassNode2"/>
+   <object idref="InterfaceNode1"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="startArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="DIAMOND"/>
+    </void>
+   </object>
+   <object idref="ClassNode3"/>
+   <object idref="ClassNode1"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="startArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="DIAMOND"/>
+    </void>
+   </object>
+   <object idref="ClassNode3"/>
+   <object idref="ClassNode0"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="startArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="DIAMOND"/>
+    </void>
+   </object>
+   <object idref="ClassNode2"/>
+   <object idref="ClassNode3"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="V"/>
+    </void>
+   </object>
+   <object idref="ClassNode1"/>
+   <object idref="ClassNode4"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="V"/>
+    </void>
+   </object>
+   <object idref="ClassNode1"/>
+   <object idref="ClassNode5"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="V"/>
+    </void>
+   </object>
+   <object idref="ClassNode5"/>
+   <object idref="ClassNode4"/>
+  </void>
+ </object>
+</java>

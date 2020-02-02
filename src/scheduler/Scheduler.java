@@ -420,28 +420,6 @@ public class Scheduler implements Runnable, ElevatorEvents {
 
 	}
 
-	public static void main(String[] args) {
-		// map of maps where key of the parent map is elevator name, value is the
-		// attributes of
-		// of the elevator defined in the config.xml file
-		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration
-				.getAllElevatorSubsystemConfigurations();
-
-		// map of maps where key of the parent map is the floor name and value is the
-		// elevator attributes in the
-		// config.xml file
-		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
-				.getAllFloorSubsytemConfigurations();
-		// scheduler attributes from the config.xml
-		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
-
-		Scheduler scheduler = new Scheduler(schedulerConfiguration.get("name"),
-				Integer.parseInt(schedulerConfiguration.get("port")), elevatorConfigurations, floorConfigurations);
-		// creating a thread for the scheduler
-		Thread schedulerThread = new Thread(scheduler, schedulerConfiguration.get("name"));
-		schedulerThread.start();
-	}
-
 	@Override
 	public synchronized Request getNextEvent() {
 		while (eventsQueue.isEmpty()) {
@@ -464,4 +442,27 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		eventsQueue.add(request);
 		this.notifyAll();
 	}
+
+	public static void main(String[] args) {
+		// map of maps where key of the parent map is elevator name, value is the
+		// attributes of
+		// of the elevator defined in the config.xml file
+		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration
+				.getAllElevatorSubsystemConfigurations();
+
+		// map of maps where key of the parent map is the floor name and value is the
+		// elevator attributes in the
+		// config.xml file
+		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
+				.getAllFloorSubsytemConfigurations();
+		// scheduler attributes from the config.xml
+		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
+
+		Scheduler scheduler = new Scheduler(schedulerConfiguration.get("name"),
+				Integer.parseInt(schedulerConfiguration.get("port")), elevatorConfigurations, floorConfigurations);
+		// creating a thread for the scheduler
+		Thread schedulerThread = new Thread(scheduler, schedulerConfiguration.get("name"));
+		schedulerThread.start();
+	}
+
 }
