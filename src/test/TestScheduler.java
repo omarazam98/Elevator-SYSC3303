@@ -1,9 +1,9 @@
-package scheduler;
+package test;
 
 public class TestScheduler {
 
 	public TestScheduler() {
-		// TODO Auto-generated constructor stub
 	}
-
 }
+
+

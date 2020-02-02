@@ -1,13 +1,15 @@
 
-package requests;
+package test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import elevator.Direction;
 import java.util.Date;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import requests.Request;
 
 /**
  * Test class for info.Request
@@ -20,26 +22,26 @@ public class RequestTest {
     private Request req1 = null;
     private Request req2 = null;
 
-    @BeforeEach
-    void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         req1 = new Request(new Date(), 1, "UP", 3);
         req2 = new Request(new Date(), 2, "DOWN", 4);
     }
 
     @Test
-    void testRequest() {
+    public void testRequest() {
         Request testReq = new Request(new Date(), 1, "UP", 3);
         assertTrue(testReq instanceof Request);
     }
 
     @Test
-    void testGetFloor() {
+    public void testGetFloor() {
         // req1's floor # should equal to 1
         assertEquals(req1.getFloor(), 1);
     }
 
     @Test
-    void testSetFloor() {
+    public void testSetFloor() {
         // req1's floor # should equal to 1
         assertTrue(req1.getFloor() == 1);
 
@@ -52,13 +54,13 @@ public class RequestTest {
     }
 
     @Test
-    void testGetCarButton() {
+    public void testGetCarButton() {
         // req1's carButton # should equal to 1
         assertEquals(req1.getCarButton(), 3);
     }
 
     @Test
-    void testSetCarButton() {
+    public void testSetCarButton() {
         // req1's carButton # should equal to 1
         assertTrue(req1.getCarButton() == 3);
 
@@ -69,20 +71,20 @@ public class RequestTest {
     }
 
     @Test
-    void testGetTime() {
+    public void testGetTime() {
         // tests if req1's time field has been initialized
         assertTrue(req1.getTime() != null);
         assertTrue(req1.getTime() instanceof Date);
     }
 
     @Test
-    void testGetDirec() {
+    public void testGetDirec() {
         // req1's direction should be UP
         assertEquals(req1.getDirec(), "UP");
     }
 
     @Test
-    void testSetDirec() {
+    public void testSetDirec() {
         // req1's direction should be UP
         assertEquals(req1.getDirec(), "UP");
 

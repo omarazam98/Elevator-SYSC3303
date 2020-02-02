@@ -1,22 +1,16 @@
-package elevator;
+package test;
 
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.Queue;
 
 import org.junit.*;
 
-import main.elevatorSubsystem.ElevatorSubsystem;
-import main.global.ElevatorSystemConfiguration;
-import main.server.Server;
+import elevator.ElevatorSubsystem;
+import elevator.ElevatorSystemConfiguration;
 
 public class TestElevatorSubsystem {
 	
@@ -36,11 +30,23 @@ public class TestElevatorSubsystem {
 
 		//Iterate through each elevator and create an instance of an ElevatorSubsystem
 		for (String elevatorName : elevatorConfigurations.keySet()) {
+			
+			HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
 			//Get the configuration for this particular 'elevatorName'
 			HashMap<String, String> elevatorConfiguration = elevatorConfigurations.get(elevatorName);
 			
+			HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
+					.getAllFloorSubsytemConfigurations();
+
+			int temp = 0;
+			for (@SuppressWarnings("unused") String floor : floorConfigurations.keySet()) {
+				// find amount of floors
+				temp+= temp;
+			}
+			
 			//Create an instance of ElevatorSubsystem for this 'elevatorName'
-			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName, Integer.parseInt(elevatorConfiguration.get("port")));
+			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName, Integer.parseInt(elevatorConfiguration.get("port")), Integer.parseInt(elevatorConfiguration.get("startFloor")),
+					Integer.parseInt(schedulerConfiguration.get("port")), temp);
 			
 			Thread elevatorSubsystemThread = new Thread(elevatorSubsystem, elevatorName);
 			elevatorSubsystemThread.start();
