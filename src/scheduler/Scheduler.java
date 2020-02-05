@@ -29,7 +29,7 @@ import server.Server;
  * This class deals with the scheduler system and is responsible for creating
  * instance of it.
  * 
- * It ensure all trip requests are auctioned in a timely manner, ensuring none
+ * It ensure all trip requests are made in a timely manner, ensuring none
  * of them wait indefinitely. The scheduler maintains elevator subsystem state
  * at any given time, this includes: - Elevator locations, directions, status,
  * doors
