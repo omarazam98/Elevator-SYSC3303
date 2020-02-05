@@ -82,7 +82,7 @@ floor
 Author: Ruixuan Ni
 
 unit tests  
-Author: Omar Azam, Abdulla Al-wazzan, Ruixuan Ni
+Author: Ruixuan Ni, Omar Azam, Abdulla Al-wazzan
 
 UML and Sequence Diagaram 
 Author: Kamran Sagheir
