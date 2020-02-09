@@ -1,9 +1,12 @@
 package requests;
 
+import enums.SystemEnumTypes.Direction;
+
 public class ElevatorArrivalRequest extends Request {
 
 	private String ElevatorName;
 	private String FloorName;
+	private Direction direction;
 
 	// request type for parsing purposes
 	private static byte[] RequestType = new byte[] { 1, 2 };
@@ -11,15 +14,19 @@ public class ElevatorArrivalRequest extends Request {
 	/**
 	 * Create a request for an elevator's arrival at a floor
 	 * 
-	 * @param Elevator current elevator name
-	 * @param Floor    current floor name
+	 * @param ElevatorName current elevator name
+	 * @param FloorName   current floor name
+	 * @param direction current elevator direction
 	 */
-	public ElevatorArrivalRequest(String Elevator, String Floor) {
+	public ElevatorArrivalRequest(String Elevator, String Floor,Direction direction) {
 		this.setRequestType(RequestType);
-		this.ElevatorName = Elevator;
-		this.FloorName = Floor;
+		this.setElevatorName(Elevator);
+ 		this.setFloorName(Floor); 
+ 		this.setDirection(direction);
+		
 	}
 
+	
 	/**
 	 * returns the elevator name
 	 */
@@ -53,6 +60,20 @@ public class ElevatorArrivalRequest extends Request {
 	 */
 	public static byte[] getRequestType() {
 		return RequestType;
+	}
+	/**
+	 * 
+	 * @param direction sent elevator's direction
+	 */
+	public void setDirection(Direction direction) {
+		this.direction = direction;
+	}
+	/**
+	 * 
+	 * @return the direction of elevator
+	 */
+	public Direction getDirection() {
+		return this.direction;
 	}
 
 }
