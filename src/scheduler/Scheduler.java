@@ -17,9 +17,10 @@ import elevator.ElevatorEvents;
 import elevator.ElevatorSystemConfiguration;
 import enums.SystemEnumTypes;
 import requests.ElevatorArrivalRequest;
+import requests.ElevatorDestinationRequest;
 import requests.ElevatorDoorRequest;
-import requests.ElevatorLampRequest;
 import requests.ElevatorMotorRequest;
+import requests.ElevatorWaitRequest;
 import requests.FloorButtonRequest;
 import requests.FloorLampRequest;
 import requests.Request;
@@ -29,9 +30,9 @@ import server.Server;
  * This class deals with the scheduler system and is responsible for creating
  * instance of it.
  * 
- * It ensure all trip requests are made in a timely manner, ensuring none
- * of them wait indefinitely. The scheduler maintains elevator subsystem state
- * at any given time, this includes: - Elevator locations, directions, status,
+ * It ensure all trip requests are made in a timely manner, ensuring none of
+ * them wait indefinitely. The scheduler maintains elevator subsystem state at
+ * any given time, this includes: - Elevator locations, directions, status,
  * doors
  *
  * It schedules events required for the complete system. The scheduler is
@@ -127,8 +128,8 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getFloorName(),
 					"A trip request has been made from floor " + request.getFloorName() + " to go to floor:  "
 							+ request.getDestinationFloor() + ".");
-			this.incomingTripRequest(Integer.parseInt(request.getFloorName()),
-					Integer.parseInt(request.getDestinationFloor()), request.getDirection());
+			this.incomingTripRequest(Integer.parseInt(request.getFloorName()), request.getDirection());
+
 		} else if (event instanceof ElevatorArrivalRequest) {
 			ElevatorArrivalRequest request = (ElevatorArrivalRequest) event;
 
@@ -155,53 +156,253 @@ public class Scheduler implements Runnable, ElevatorEvents {
 				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
 						"Elevator is in the moving state " + request.getRequestAction() + ".");
 			}
+		} else if (event instanceof ElevatorWaitRequest) {
+			ElevatorWaitRequest request = (ElevatorWaitRequest) event;
+
+			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+					"Elevator has completed its wait.");
+			this.eventElevatorWaitComplete(request.getElevatorName());
+		} else if (event instanceof ElevatorDestinationRequest) {
+			ElevatorDestinationRequest request = (ElevatorDestinationRequest) event;
+
+			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+					"Destination request from pickup floor: " + request.getPickupFloor() + " to destination floor: "
+							+ request.getDestinationFloor());
+			this.eventElevatorDestinationRequest(request.getElevatorName(), Integer.parseInt(request.getPickupFloor()),
+					Integer.parseInt(request.getDestinationFloor()));
 		}
 
 	}
 
-	private void incomingTripRequest(int currentFloorNumber, int destinationFloorNumber,
-			SystemEnumTypes.Direction direction) {
-		// make an instance of MakeTrip
-		MakeTrip requestedTrip = new MakeTrip(currentFloorNumber, destinationFloorNumber);
-		// check if any elevator in motion can accomplish the trip request by re-routing
-		for (String elevatorName : monitorByElevatorName.keySet()) {
-			if (this.assignTripToInServiceElevator(elevatorName, requestedTrip)) {
-				this.toString("The " + elevatorName + " will serve the request: " + requestedTrip);
-				// Send event to elevator to light floor button for new destination.
+	/**
+	 * 
+	 * @param elevatorName
+	 * @param pickupFloor
+	 * @param destinationFloor
+	 */
+	private void eventElevatorDestinationRequest(String elevatorName, Integer pickupFloor, Integer destinationFloor) {
+		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
+
+		if (elevatorMonitor.addDestination(pickupFloor, destinationFloor)) {
+			this.toString(
+					"Destination [" + destinationFloor + "] was successfully added to " + elevatorName + "'s queue.");
+		} else {
+			this.toString("Destination [" + destinationFloor + "] was not successfully added to " + elevatorName
+					+ "'s queue. Abandoning destination request.");
+		}
+	}
+
+	/**
+	 * 
+	 * @param elevatorName
+	 */
+	private void eventElevatorWaitComplete(String elevatorName) {
+		// Get elevatorMonitor for the elevator.
+		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
+
+		// If the elevatorMonitor is waiting for a destination request (Elevator is at a
+		// pickup floor and is awaiting for the destination request
+		// Continue to wait until the destination request has been received. Send
+		// another ElevatorWaitRequest to the elevator.
+		// TODO This event should be allowed to be late.
+		if (elevatorMonitor.isWaitingForDestinationRequest()) {
+			this.toString("Elevator " + elevatorName + ": is at Floor " + elevatorMonitor.getElevatorFloorLocation()
+					+ " for a pickup, has completed waiting for passengers however has not received a destination request yet.");
+
+			// Send a wait at floor command to the elevator
+			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Continue to wait at floor...");
+			this.sendToServer(new ElevatorWaitRequest(elevatorName), this.portsByElevatorName.get(elevatorName));
+
+			// Are there still more floors to visit? If so then send an ElevatorDoorRequest
+			// to close it's doors.
+		} else if (!elevatorMonitor.isEmpty()) {
+			this.toString("There are more floors to visit for this elevator " + elevatorName);
+
+			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
+			this.sendToServer(new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+					this.portsByElevatorName.get(elevatorName));
+
+			// If there are no more floors to visit then need to determine whether the
+			// elevator is on its start floor or not.
+			// If on the start floor, wait for the next trip request
+			// If not on the start floor, start return trip to the start floor.
+		} else {
+			Integer currentFloor = elevatorMonitor.getElevatorFloorLocation();
+			Integer startFloor = elevatorMonitor.getElevatorStartingFloorLocation();
+			boolean isElevatorOnStartFloor;
+
+			if (currentFloor == startFloor) {
+				isElevatorOnStartFloor = true;
+			} else {
+				isElevatorOnStartFloor = false;
+			}
+
+			if (isElevatorOnStartFloor) {
+				// Update direction of elevator to IDLE
+				elevatorMonitor.updateElevatorDirection(SystemEnumTypes.Direction.STAY);
+
+				this.toString("There are no available trip requests for " + elevatorName
+						+ ", and elevator is already on it's starting floor [" + startFloor
+						+ "]. Waiting for next trip request...");
+			} else {
+				this.toString("There are no available trip requests for " + elevatorName
+						+ ", elevator should return to it's starting floor [" + startFloor + "]");
+
+				this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
 				this.sendToServer(
-						new ElevatorLampRequest(String.valueOf(destinationFloorNumber),
-								SystemEnumTypes.FloorDirectionLampStatus.ON),
+						new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
 						this.portsByElevatorName.get(elevatorName));
-				return;
 			}
 		}
-		// if any elevator in service can not accomplish the trip request by re-routing,
-		// then check if there are any elevators that are free.
+	}
+
+	private Monitor planningSystem(MakeTrip tripRequest) {
+		Monitor closestElevatorMonitor = null;
+		Integer closestElevatorTime = null;
+
+		// Iterate through all elevators to determine whether there is an eligible
+		// elevator to handle this trip request,
+		// and which would be most optimal.
 		for (String elevatorName : monitorByElevatorName.keySet()) {
+			boolean currentElevatorIsMoreFavourable = false;
+
 			Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
-			if (this.assignTripToFreeElevator(elevatorName, requestedTrip)) {
-				this.toString(elevatorName + " has been assigned the trip request: " + requestedTrip);
-				// making the elevator turn on the light for the destination floor
-				this.sendToServer(
-						new ElevatorLampRequest(String.valueOf(destinationFloorNumber),
-								SystemEnumTypes.FloorDirectionLampStatus.ON),
-						this.portsByElevatorName.get(elevatorName));
+			Integer estimatedElevatorPickupTime = elevatorMonitor.estimatePickupTime(tripRequest);
 
-				if (elevatorMonitor.getElevatorStatus() == SystemEnumTypes.ElevatorCurrentStatus.STOP) {
-					// closing the doors
-					this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
-					this.sendToServer(
-							new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
-							this.portsByElevatorName.get(elevatorName));
+			// If the estimateElevatorPickupTime for this elevator is null, then this
+			// elevator cannot accommodate this tripRequest at this time
+			// skip to next iteration of foreach loop
+			if (estimatedElevatorPickupTime == null) {
+				continue;
+			}
+
+			// If there is not yet a closest eligible elevator, set the current elevator
+			// being evaluated as closestElevator
+			if (closestElevatorTime == null) {
+				currentElevatorIsMoreFavourable = true;
+			} else {
+				// The comparison between the current elevator being evaluated and the
+				// closestElevator depends on whether the closestElevator is Idle or in-service
+				if (closestElevatorMonitor.getNextElevatorDirection() == SystemEnumTypes.Direction.STAY) {
+					// The comparison between the current elevator and the closestElevator also
+					// depends on whether the current elevator being evaluated is Idle or in-service
+					// In the case where the current elevator being evaluated is in-service
+					if (elevatorMonitor.getNextElevatorDirection() == SystemEnumTypes.Direction.STAY) {
+						// If the current elevator being evaluated is in-service and has a quicker
+						// estimated pickup time
+						// then this elevator is more favourable for this trip request than the current
+						// closestElevator
+						if (estimatedElevatorPickupTime < closestElevatorTime) {
+							currentElevatorIsMoreFavourable = true;
+						}
+					} else {
+						// Always favour an in service elevator if possible.
+						// if (Math.abs(closestElevatorTime - estimatedElevatorPickupTime) >=
+						// closestElevatorTime){
+						currentElevatorIsMoreFavourable = true;
+						// }
+					}
+					// In the case where the closestElevator is IDLE
+				} else {
+					// In the case where the current elevator being evaluated is in-service
+					if (elevatorMonitor.getNextElevatorDirection() == SystemEnumTypes.Direction.STAY) {
+						// Always favour in service elevator
+						/*
+						 * //If the current elevator being evaluated is in-service and has an estimated
+						 * pickup time that is less than or equal to the current closest elevator's
+						 * pickup time //then this elevator is more favourable for this trip request
+						 * than the current closestElevator if ((estimatedElevatorPickupTime <=
+						 * closestElevatorTime) && (Math.abs(closestElevatorTime -
+						 * estimatedElevatorPickupTime) >= estimatedElevatorPickupTime)) {
+						 * currentElevatorIsMoreFavourable = true; }
+						 */
+					} else {
+						// If the current elevator being evaluated is IDLE and has a quicker estimated
+						// pickup time
+						// then this elevator is more favourable for this trip request than the current
+						// closestElevator
+						if (estimatedElevatorPickupTime < closestElevatorTime) {
+							currentElevatorIsMoreFavourable = true;
+						}
+					}
 				}
-				return;
+			}
+
+			// Replace closest Elevator with current Elevator if any of the conditions above
+			// have been met.
+			if (currentElevatorIsMoreFavourable) {
+				closestElevatorMonitor = elevatorMonitor;
+				closestElevatorTime = estimatedElevatorPickupTime;
 			}
 		}
 
-		// To the queue containing the pending requests, add the trip request
-		this.pendingTripRequests.add(requestedTrip);
-		this.toString("Request for trip: " + requestedTrip + " has been added to the pending requests "
-				+ this.pendingTripRequests + " and will be facilitated shortly in the orderly manner.");
+		return closestElevatorMonitor;
+	}
+
+	private void incomingTripRequest(int currentFloorNumber, SystemEnumTypes.Direction direction) {
+		// Create a TripRequest object
+		MakeTrip tripRequest = new MakeTrip(currentFloorNumber, direction);
+
+		Monitor elevatorMonitor = this.planningSystem(tripRequest);
+
+		// If an Elevator has been selected for this trip request, determine the next
+		// action required for the elevator.
+		// 1 - If the elevator is stopped and idle, then
+		// i - if it is at the floor of the trip request, then the floor must be
+		// advised, and the elevator needs to be advised to wait for passengers to load
+		// ii - otherwise, send a door closed event, when the door closed event is
+		// confirmed, the scheduler will determine the next direction for the elevator.
+		if (elevatorMonitor != null) {
+			elevatorMonitor.addTripRequest(tripRequest);
+			this.toString("Trip request " + tripRequest + " was assigned to " + elevatorMonitor.getCurrentElevatorName()
+					+ ".");
+			// If the elevator is currently stopped and IDLE, then a door close event must
+			// be sent.
+			if ((elevatorMonitor.getElevatorStatus() == SystemEnumTypes.ElevatorCurrentStatus.STOP)
+					&& (elevatorMonitor.getElevatorDirection() == SystemEnumTypes.Direction.STAY)) {
+
+				// Since the elevator is stopped and idle, check if it is at the floor of the
+				// trip request
+				// If so, the scheduler must then advise the floor and advise elevator to wait
+				// for passengers to load.
+				if (elevatorMonitor.getElevatorFloorLocation() == tripRequest.getUserinitalLocation()) {
+					// Send event to floor that elevator is ready to accept passengers - this will
+					// ensure the floor sends a destination request to the elevator - pushing things
+					// forward
+					this.toString(SystemEnumTypes.RequestEvent.SENT, "FLOOR " + tripRequest.getUserinitalLocation(),
+							"Elevator " + elevatorMonitor.getCurrentElevatorName()
+									+ " has arrived for a pickup/dropoff.");
+					this.sendToServer(new ElevatorArrivalRequest(elevatorMonitor.getCurrentElevatorName(),
+							String.valueOf(tripRequest.getUserinitalLocation()), elevatorMonitor.getQueueDirection()),
+							this.portsByFloorName.get(String.valueOf(tripRequest.getUserinitalLocation())));
+
+					this.portsByFloorName.get(String.valueOf(tripRequest.getUserinitalLocation()));
+
+					// Send a wait at floor command to the elevator - this is to simulate both
+					// passengers leaving and entering the elevator
+					this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorMonitor.getCurrentElevatorName(),
+							"Wait at floor for passengers to load.");
+					this.sendToServer(new ElevatorWaitRequest(elevatorMonitor.getCurrentElevatorName()),
+							this.portsByElevatorName.get(elevatorMonitor.getCurrentElevatorName()));
+					return;
+				}
+
+				// Otherwise, since the elevator is idle and stopped but not at the right floor,
+				// it must close its door to start moving in the right direction.
+				this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorMonitor.getCurrentElevatorName(),
+						"Close elevator door.");
+				this.sendToServer(
+						new ElevatorDoorRequest(elevatorMonitor.getCurrentElevatorName(),
+								SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+						this.portsByElevatorName.get(elevatorMonitor.getCurrentElevatorName()));
+			}
+		} else {
+			// Add this tripRequest to the pendingTripRequests queue
+			this.pendingTripRequests.add(tripRequest);
+			this.toString("Trip request " + tripRequest
+					+ " was unable to be assigned immediately. It has been added to pending requests "
+					+ this.pendingTripRequests + ".");
+		}
 	}
 
 	/**
@@ -216,15 +417,6 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private boolean assignTripToFreeElevator(String elevatorName, MakeTrip requestedTrip) {
-		Monitor currentElevatorMonitor = this.monitorByElevatorName.get(elevatorName);
-		// check if the elevator is empty and if so, add the trip to the queue
-		if (currentElevatorMonitor.isEmpty() && currentElevatorMonitor.addFirstTripRequest(requestedTrip)) {
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -253,21 +445,6 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] "
 					+ this.name + " : [Received an event from " + target + "] " + output);
 		}
-	}
-
-	private boolean assignTripToInServiceElevator(String elevatorName, MakeTrip tripRequest) {
-		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
-
-		// Checks if the elevator will be re-routed for another request in queue. If the
-		// elevator is in use and the requested floor is in the
-		// same direction, then add this requested trip to the current elevator monitor
-		if (!elevatorMonitor.isEmpty() && (elevatorMonitor.getQueueDirection() == tripRequest.getElevatorDirection())) {
-			// add the trip request to the queue
-			if (elevatorMonitor.addEnRouteTripRequest(tripRequest)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private void eventElevatorStopped(String elevatorName) {
@@ -385,6 +562,29 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			}
 		}
 		return pendingRequests;
+	}
+	private boolean assignTripToInServiceElevator(String elevatorName, MakeTrip tripRequest) {
+		Monitor elevatorMonitor = this.monitorByElevatorName.get(elevatorName);
+
+		// Checks if the elevator will be re-routed for another request in queue. If the
+		// elevator is in use and the requested floor is in the
+		// same direction, then add this requested trip to the current elevator monitor
+		if (!elevatorMonitor.isEmpty() && (elevatorMonitor.getQueueDirection() == tripRequest.getElevatorDirection())) {
+			// add the trip request to the queue
+			if (elevatorMonitor.addEnRouteTripRequest(tripRequest)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean assignTripToFreeElevator(String elevatorName, MakeTrip requestedTrip) {
+		Monitor currentElevatorMonitor = this.monitorByElevatorName.get(elevatorName);
+		// check if the elevator is empty and if so, add the trip to the queue
+		if (currentElevatorMonitor.isEmpty() && currentElevatorMonitor.addFirstTripRequest(requestedTrip)) {
+			return true;
+		}
+		return false;
 	}
 
 	private void eventElevatorArrivalNotice(String elevatorName, int floorNumber) {

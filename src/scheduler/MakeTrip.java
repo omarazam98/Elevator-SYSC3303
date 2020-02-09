@@ -1,6 +1,7 @@
 package scheduler;
 
 import enums.SystemEnumTypes;
+
 /*
  * This class deals with the trip requests that have been made and contains 
  * getters and setters for the user current and destination locations respectively.
@@ -10,16 +11,22 @@ public class MakeTrip {
 	private int userinitalLocation;
 	private int userFinalLocation;
 	private SystemEnumTypes.Direction elevatorDirection;
+	private boolean destinationStatus;
 
-	public MakeTrip(int initialFloor, int finalFloor) {
-		this.userinitalLocation = initialFloor;
-		this.userFinalLocation = finalFloor;
+	public MakeTrip(int pickupFloor, SystemEnumTypes.Direction direction) {
+		this.userinitalLocation = pickupFloor;
+		this.destinationStatus = false;
+		this.elevatorDirection = direction;
+	}
 
-		if (finalFloor > initialFloor) {
-			this.elevatorDirection = SystemEnumTypes.Direction.UP;
-		} else {
-			this.elevatorDirection = SystemEnumTypes.Direction.DOWN;
-		}
+	/**
+	 * This method sets a flag for the elevator such that it tells if the elevator
+	 * has been assigned a job
+	 * 
+	 * @return true if the current elevator has been assigned a floor to visit
+	 */
+	public boolean hasDestination() {
+		return this.destinationStatus;
 	}
 
 	/**
@@ -30,21 +37,35 @@ public class MakeTrip {
 	}
 
 	/**
-	 * @return this method returns the final floor on which the user is planning to go
+	 * @return this method returns the final floor on which the user is planning to
+	 *         go
 	 */
 	public int getUserFinalLocation() {
 		return this.userFinalLocation;
 	}
 
 	/**
-	 * @return this method returns the direction in which the elevator is currently moving
+	 * This method is responsible for setting up the user final location
+	 * 
+	 * @param destinationFloor the locaiton that the user wants to reach
+	 */
+	public void setDestinationFloor(int destinationFloor) {
+		this.userFinalLocation = destinationFloor;
+		this.destinationStatus = true;
+	}
+
+	/**
+	 * @return this method returns the direction in which the elevator is currently
+	 *         moving
 	 */
 	public SystemEnumTypes.Direction getElevatorDirection() {
 		return this.elevatorDirection;
 	}
 
 	/**
-	 * An equals method that checks if the object that is being passed is an instance of TripRequest class.
+	 * An equals method that checks if the object that is being passed is an
+	 * instance of TripRequest class.
+	 * 
 	 * @param trip refers to the Trip that user wants to make
 	 * @return true if the requested trip is an instance of the Trip class
 	 */

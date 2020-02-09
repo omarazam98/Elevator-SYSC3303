@@ -16,7 +16,7 @@ import enums.SystemEnumTypes;
  *
  */
 public class Monitor {
-	private String currentELevatorName;
+	private String currentElevatorName;
 	private LinkedHashSet<MakeTrip> requestInQueue;
 	private HashSet<Integer> destinationFloor;
 	private HashSet<Integer> requestFloor;
@@ -30,7 +30,7 @@ public class Monitor {
 			SystemEnumTypes.ElevatorCurrentStatus currentElevatorStatus,
 			SystemEnumTypes.ElevatorCurrentDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
 
-		this.currentELevatorName = elevatorName;
+		this.currentElevatorName = elevatorName;
 		this.requestInQueue = new LinkedHashSet<MakeTrip>();
 		this.destinationFloor = new HashSet<Integer>();
 		this.requestFloor = new HashSet<Integer>();
@@ -149,6 +149,63 @@ public class Monitor {
 		return currentLowestFloor;
 	}
 
+	public boolean isWaitingForDestinationRequest() {
+		if (this.queueDirection != SystemEnumTypes.Direction.STAY) {
+			for (MakeTrip tripRequest : this.requestInQueue) {
+				if (tripRequest.getUserinitalLocation() == this.elevatorCurrentState.getCurrentFloor()) {
+					if (tripRequest.hasDestination() == false) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * This method assumes the proper timing of the destination request (once the
+	 * elevator is at a floor to do pickup).
+	 * 
+	 * @param destinationFloor
+	 * @return
+	 */
+	@SuppressWarnings("incomplete-switch")
+	public boolean addDestination(Integer pickupFloor, Integer destinationFloor) {
+		boolean destinationFloorValid = false;
+		// Check whether the elevator can take this destinationFloor given the elevators
+		// current state (the elevator must be in service of the queue (not travelling
+		// towards the first pickup floor)
+		// The destination must not require the elevator to change directions from its
+		// current location.
+		switch (this.queueDirection) {
+		case UP:
+			if (destinationFloor > this.elevatorCurrentState.getCurrentFloor()) {
+				destinationFloorValid = true;
+			}
+			break;
+		case DOWN:
+			if (destinationFloor < this.elevatorCurrentState.getCurrentFloor()) {
+				destinationFloorValid = true;
+			}
+			break;
+		}
+		// TODO mod if things break.....
+		// If the destination floor is valid, add it to the destination floors queue and
+		// add it to its corresponding tripRequest
+		if (destinationFloorValid) {
+			this.destinationFloor.add(destinationFloor);
+			for (MakeTrip tripRequest : requestInQueue) {
+				if ((tripRequest.getUserinitalLocation() == pickupFloor) && (!tripRequest.hasDestination())) {
+					tripRequest.setDestinationFloor(destinationFloor);
+					break;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	/**
 	 * updates the elevator door status
 	 */
@@ -189,6 +246,21 @@ public class Monitor {
 			this.removePickupFloor(this.elevatorCurrentState.getCurrentFloor());
 		}
 		return completedTrips;
+	}
+
+	/**
+	 * This method adds the request to the elevator queue if it is in service
+	 * currently or else it makes it the current elevator default request
+	 * 
+	 * @param tripRequest
+	 * @return
+	 */
+	public boolean addTripRequest(MakeTrip tripRequest) {
+		if (this.isEmpty()) {
+			return this.addFirstTripRequest(tripRequest);
+		} else {
+			return this.addEnRouteTripRequest(tripRequest);
+		}
 	}
 
 	/**
@@ -241,8 +313,12 @@ public class Monitor {
 		return completedTrips;
 	}
 
-	public Object getQueueDirection() {
+	public SystemEnumTypes.Direction getQueueDirection() {
 		return this.queueDirection;
+	}
+
+	public SystemEnumTypes.Direction getElevatorDirection() {
+		return this.elevatorCurrentState.getDirection();
 	}
 
 	/**
@@ -297,6 +373,46 @@ public class Monitor {
 		return false;
 	}
 
+	@SuppressWarnings("incomplete-switch")
+	public Integer estimatePickupTime(MakeTrip tripRequest) {
+		int averageTravelTimePerFloor = 5;
+		int averageTimePerStop = 9;
+		if (this.isEmpty()) {
+			return (Math.abs(this.elevatorCurrentState.getCurrentFloor() - tripRequest.getUserinitalLocation())
+					* averageTravelTimePerFloor);
+		} else if (this.addEnRouteTripRequest(tripRequest)) {
+			int interimStops = 0;
+			HashSet<Integer> allFloors = new HashSet<Integer>();
+			allFloors.addAll(this.requestFloor);
+			allFloors.addAll(this.destinationFloor);
+			switch (this.queueDirection) {
+			case UP:
+				// Check if any of the scheduled floor stops are in between the elevator's
+				// current floor and the tripRequests floor, if so this is an interim stop
+				for (Integer floor : allFloors) {
+					if ((this.elevatorCurrentState.getCurrentFloor() < floor)
+							&& (floor < tripRequest.getUserinitalLocation())) {
+						interimStops++;
+					}
+				}
+				break;
+			case DOWN:
+				// Check if any of the scheduled floor stops are in between the elevator's
+				// current floor and the tripRequests floor, if so this is an interim stop
+				for (Integer floor : allFloors) {
+					if ((this.elevatorCurrentState.getCurrentFloor() > floor)
+							&& (floor < tripRequest.getUserinitalLocation())) {
+						interimStops++;
+					}
+				}
+				break;
+			}
+			return ((Math.abs(this.elevatorCurrentState.getCurrentFloor() - tripRequest.getUserinitalLocation())
+					* averageTravelTimePerFloor) + (interimStops * averageTimePerStop));
+		}
+		return null;
+	}
+
 	/**
 	 * gets the elevator floor locaiton
 	 * 
@@ -311,6 +427,14 @@ public class Monitor {
 	 */
 	public Integer getElevatorStartingFloorLocation() {
 		return this.elevatorCurrentState.getStartFloor();
+	}
+
+	/**
+	 * 
+	 * @return the current elevator name
+	 */
+	public String getCurrentElevatorName() {
+		return currentElevatorName;
 	}
 
 	/**
@@ -350,7 +474,7 @@ public class Monitor {
 	 */
 	public String toString() {
 		String s = "";
-		s += "[" + "Elevator name: " + this.currentELevatorName + "\n" + "Current floor: "
+		s += "[" + "Elevator name: " + this.currentElevatorName + "\n" + "Current floor: "
 				+ this.elevatorCurrentState.getCurrentFloor() + "\n" + "Current direction: "
 				+ this.elevatorCurrentState.getDirection() + "\n" + "Current elevator status: "
 				+ this.elevatorCurrentState.getCurrentStatus() + "\n" + "Current door status: "
