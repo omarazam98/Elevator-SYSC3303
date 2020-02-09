@@ -1,9 +1,12 @@
 package info;
 
 import java.net.DatagramPacket;
+
 import java.util.Arrays;
 
+
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.Direction;
 import requests.DirectionLampRequest;
 import requests.ElevatorArrivalRequest;
 import requests.ElevatorDoorRequest;
@@ -113,7 +116,8 @@ public final class Helper {
 			/* Parse based on Elevator Arrival Request */
 			String ElevatorName = ParseString(data, counter);
 			String FloorName = ParseString(data, counter);
-			request = new ElevatorArrivalRequest(ElevatorName, FloorName);
+			Direction dir = (Direction) ParseEnum(data,Direction.class, counter); 
+			request = new ElevatorArrivalRequest(ElevatorName, FloorName,dir);
 		} else if (Arrays.equals(rt, ElevatorDoorRequest.getRequestType())) {
 			/* Parse based on Elevator Door Request */
 			String ElevatorName = ParseString(data, counter);
