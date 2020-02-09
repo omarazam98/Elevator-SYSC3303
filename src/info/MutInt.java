@@ -54,7 +54,7 @@ public class MutInt {
 	}
 
 	/**
-	 * gets hte value and increments it
+	 * gets the value and increments it
 	 */
 	public int getAndAdd(int i) {
 		int ret_val = value;

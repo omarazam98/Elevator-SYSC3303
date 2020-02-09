@@ -23,8 +23,9 @@ import java.util.Queue;
 import elevator.ElevatorEvents;
 import elevator.ElevatorSystemConfiguration;
 import enums.SystemEnumTypes;
+import requests.ElevatorArrivalRequest;
+import requests.ElevatorDestinationRequest;
 import requests.FloorButtonRequest;
-import requests.FloorLampRequest;
 import requests.Request;
 import server.Server;
 
@@ -41,11 +42,12 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 	private Server server;
 	private String floorNum;
 	private Queue<Request> eventRequest;
+	private Queue<FloorButtonRequest> upReqList; // Divides the button requests to up and down
+	private Queue<FloorButtonRequest> downReqList;
+	private HashMap<String, Integer> elevatorPorts;
 	private int schedulerPort;
 	private final boolean debug = false;
-	@SuppressWarnings("unused")
 	private SystemEnumTypes.FloorDirectionLampStatus floorLamp_UP;
-	@SuppressWarnings("unused")
 	private SystemEnumTypes.FloorDirectionLampStatus floorLamp_DOWN;
 
 	/**
@@ -55,18 +57,28 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 	 * @param floorPort     the port on which the floor will operate
 	 * @param schedulerPort the scheduler port
 	 */
-	public FloorSubSystem(String floorNum, int floorPort, int schedulerPort) {
+	public FloorSubSystem(String floorNum, int floorPort, int schedulerPort,
+			HashMap<String, HashMap<String, String>> elevatorConfig) {
 
 		this.floorNum = floorNum;
 		this.eventRequest = new LinkedList<Request>();
-
+		this.elevatorPorts = new HashMap<String, Integer>();
 		this.schedulerPort = schedulerPort;
 		this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.OFF;
 		this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.OFF;
 
+		this.upReqList = new LinkedList<FloorButtonRequest>();
+		this.downReqList = new LinkedList<FloorButtonRequest>();
+
+		// server for floorSubsystem
 		server = new Server(this, floorPort, this.debug);
 		Thread serverThread = new Thread(server, floorNum);
 		serverThread.start();
+
+		// initialize elevator ports list
+		for (String elevator : elevatorConfig.keySet()) {
+			this.elevatorPorts.put(elevator, Integer.parseInt(elevatorConfig.get(elevator).get("port")));
+		}
 	}
 
 	@Override
@@ -93,19 +105,23 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 	 * @param lamp      direction of motion
 	 * @return
 	 */
-	public boolean toggleFloorLamp(String floorLamp, String lamp) {
-		if (floorLamp.equals("UP"))
-			this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.ON;
-		if (floorLamp.equals("DOWN"))
-			this.floorLamp_DOWN = SystemEnumTypes.FloorDirectionLampStatus.ON;
-		else if (floorLamp.equals("OFF")) {
-			if (lamp.equals("UP"))
+	public boolean toggleFloorLamp(String floorLamp, String status) {
+		if (floorLamp.equals("UP")) {
+			if (status.equals("ON")) {
+				this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.ON;
+			} else {
 				this.floorLamp_UP = SystemEnumTypes.FloorDirectionLampStatus.OFF;
-			if (lamp.equals("DOWN"))
+			}
+		}
+		if (floorLamp.equals("DOWN")) {
+			if (status.equals("ON")) {
+				this.floorLamp_DOWN = SystemEnumTypes.FloorDirectionLampStatus.ON;
+			} else {
 				this.floorLamp_DOWN = SystemEnumTypes.FloorDirectionLampStatus.OFF;
+			}
 		}
 		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Tuning "
-				+ floorLamp + " button lamp " + lamp + ".");
+				+ floorLamp + " button lamp " + status + ".");
 		return true;
 	}
 
@@ -166,16 +182,58 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 						+ "] Button " + currRequest.getDirection() + " at floor " + floorNum + " has been pressed.");
 				this.toggleFloorLamp(currRequest.getDirection().toString(), "ON"); // Turn on button lamp
 
+				if (((FloorButtonRequest) request).getDirection().equals(SystemEnumTypes.Direction.UP)) {
+					this.upReqList.add((FloorButtonRequest) request);
+				} else if (((FloorButtonRequest) request).getDirection().equals(SystemEnumTypes.Direction.DOWN)) {
+					this.downReqList.add((FloorButtonRequest) request);
+				}
+
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
-		} else if (request instanceof FloorLampRequest) { // If event received is a FloorLampRequest
-			FloorLampRequest currRequest = (FloorLampRequest) request;
+		} else if (request instanceof ElevatorArrivalRequest) {
+			ElevatorArrivalRequest currRequest = (ElevatorArrivalRequest) request;
 
 			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor "
-					+ floorNum + " : [EVENT RECEIVED FROM Scheduler ] Shut off " + currRequest.getDirection()
+					+ floorNum + " : [EVENT RECEIVED FROM Scheduler ] Shut off " + currRequest.getDirec()
 					+ " direction lamp.");
-			toggleFloorLamp(currRequest.getDirection().toString(), "OFF"); // Turn off button lamp
+
+			toggleFloorLamp(currRequest.getDirec(), "OFF"); // Turn off button lamp
+
+			// send request corresponding to direction to elevator
+			if (currRequest.getDirec().equals(SystemEnumTypes.Direction.UP)) {
+				for (FloorButtonRequest fbReq : this.upReqList) {
+					ElevatorDestinationRequest desRequest = new ElevatorDestinationRequest(this.getName(),
+							fbReq.getDestinationFloor(), ((ElevatorArrivalRequest) request).getElevatorName());
+					System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S"))
+							+ "] Floor " + floorNum + " : [EVENT SEND TO Elevator " + currRequest.getElevatorName()
+							+ "] moving to floor : " + fbReq.getDestinationFloor());
+					try {
+						server.send(desRequest, InetAddress.getLocalHost(),
+								this.elevatorPorts.get(currRequest.getElevatorName()));
+					} catch (UnknownHostException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				this.upReqList.clear();
+			} else if (currRequest.getDirec().equals(SystemEnumTypes.Direction.DOWN)) {
+				for (FloorButtonRequest fbReq : this.downReqList) {
+					ElevatorDestinationRequest desRequest = new ElevatorDestinationRequest(this.getName(),
+							fbReq.getDestinationFloor(), ((ElevatorArrivalRequest) request).getElevatorName());
+					System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S"))
+							+ "] Floor " + floorNum + " : [EVENT SEND TO Elevator " + currRequest.getElevatorName()
+							+ "] moving to floor : " + fbReq.getDestinationFloor());
+					try {
+						server.send(desRequest, InetAddress.getLocalHost(),
+								this.elevatorPorts.get(currRequest.getElevatorName()));
+					} catch (UnknownHostException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				this.downReqList.clear();
+			}
 		}
 	}
 
@@ -193,14 +251,16 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 		List<FloorSubSystem> floors = new LinkedList<FloorSubSystem>();
 		SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss.mmm");
 
-		// This will return a Map of all attributes for the Scheduler (as per
-		// config.xml)
+		// Map of all attributes for the Scheduler
 		HashMap<String, String> schedulerConfiguration = ElevatorSystemConfiguration.getSchedulerConfiguration();
 
-		// This will return a Map of Maps. First key -> floor Name, Value -> map of
-		// all attributes for that floor (as per config.xml)
+		// Map of <floor Name, <attributes for that floor>>
 		HashMap<String, HashMap<String, String>> floorConfigurations = ElevatorSystemConfiguration
 				.getAllFloorSubsytemConfigurations();
+
+		// Map of <ElevatorName, <attributes of elevator>>
+		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration
+				.getAllElevatorSubsystemConfigurations();
 
 		// Iterate through each floor and create an instance of an floorSubsystem
 		for (String floorName : floorConfigurations.keySet()) {
@@ -210,7 +270,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 			// Create an instance of floorSubsystem for this 'floorName'
 			FloorSubSystem floorSubsystem = new FloorSubSystem(floorName,
 					Integer.parseInt(floorConfiguration.get("port")),
-					Integer.parseInt(schedulerConfiguration.get("port")));
+					Integer.parseInt(schedulerConfiguration.get("port")), elevatorConfigurations);
 			floors.add(floorSubsystem);
 
 			// Spawn and start a new thread for this floorSubsystem instance

@@ -4,7 +4,6 @@ import java.net.DatagramPacket;
 
 import java.util.Arrays;
 
-
 import enums.SystemEnumTypes;
 import requests.DirectionLampRequest;
 import requests.ElevatorArrivalRequest;
@@ -55,12 +54,13 @@ public final class Helper {
 	 */
 	public static Request ParseRequest(DatagramPacket packet) {
 		byte[] data = packet.getData();
+		// int data_length = packet.getLength();
+		// if(data.length != data_length) throw Invalid();
 		MutInt counter = new MutInt(0);
+		System.out.println("df shdsfi" + counter);
 		if (data[counter.getAndIncrement()] != 0) {
 			System.out.println("Could not parse data. Invalid request.");
 		}
-		// System.exit(0);
-		// }
 
 		String[] SrcDests = ParseSrcDest(data, counter);
 
@@ -68,6 +68,7 @@ public final class Helper {
 		Request request = ParseOnType(data, RequestType, counter);
 		IncludeParams(SrcDests, request);
 		return request;
+
 	}
 
 	private static void IncludeParams(String[] arr, Request request) {
@@ -115,8 +116,9 @@ public final class Helper {
 			/* Parse based on Elevator Arrival Request */
 			String ElevatorName = ParseString(data, counter);
 			String FloorName = ParseString(data, counter);
-			SystemEnumTypes.Direction dir = (SystemEnumTypes.Direction) ParseEnum(data, SystemEnumTypes.Direction.class, counter); 
-			request = new ElevatorArrivalRequest(ElevatorName, FloorName,dir);
+			SystemEnumTypes.Direction dir = (SystemEnumTypes.Direction) ParseEnum(data, SystemEnumTypes.Direction.class,
+					counter);
+			request = new ElevatorArrivalRequest(ElevatorName, FloorName, dir);
 		} else if (Arrays.equals(rt, ElevatorDoorRequest.getRequestType())) {
 			/* Parse based on Elevator Door Request */
 			String ElevatorName = ParseString(data, counter);
@@ -186,6 +188,7 @@ public final class Helper {
 	private static <T extends Enum<T>> Enum<?> ParseEnum(byte[] data, Class<T> clazz, MutInt counter) {
 
 		Enum<?>[] enums = clazz.getEnumConstants();
+		System.out.println("feklefw e " + data.length + "fsdkej eiotr" + enums.length);
 		if ((((int) data[counter.intValue()]) - 1) < enums.length) {
 			return enums[((int) data[counter.getAndAdd(2)]) - 1];
 		}
