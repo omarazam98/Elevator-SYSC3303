@@ -213,7 +213,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		this.sendServer(request);
 	}
    /*
-    * Deals with loading passengers
+    * Deals with elevator loading passengers
     */
 	private void WaitforPassengers(){
  		this.toString("Elevator is waiting while loading passengers...");
