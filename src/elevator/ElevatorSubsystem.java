@@ -75,9 +75,9 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		serverThread = new Thread(server, name);
 		serverThread.start();
 	}
+	
     public ElevatorSubsystem(String name,int port) {
     	this.name = name;
-    	this.events = new LinkedList<Request>();
     	server = new Server(this, port, this.debug);
 		serverThread = new Thread(server, name);
 		serverThread.start();
@@ -380,7 +380,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			// Create an instance of ElevatorSubsystem for this 'elevatorName'
 			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevator,Integer.parseInt(elevatorConfiguration.get("port")),
 					Integer.parseInt(elevatorConfiguration.get("startFloor")), Integer.parseInt(schedulerConfiguration.get("port")),temp,
- 					Integer.parseInt(elevatorConfiguration.get("timeBetweenFloors")), Integer.parseInt(elevatorConfiguration.get("passangerWaitTime")),
+ 					Integer.parseInt(elevatorConfiguration.get("timeBetweenFloors")), Integer.parseInt(elevatorConfiguration.get("passengerWaitTime")),
  					Integer.parseInt(elevatorConfiguration.get("doorOperationTime")));
 					
 			// Spawn and start a new thread for this ElevatorSubsystem instance
