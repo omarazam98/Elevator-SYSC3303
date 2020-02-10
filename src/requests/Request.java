@@ -14,6 +14,9 @@ public class Request {
 	private String destination;
 	private byte[] requestType;
 	private String source;
+	public String Receiver;
+
+	public String Sender;
 
 	protected Request() {
 
@@ -38,6 +41,12 @@ public class Request {
 	protected void setRequestType(byte[] RequestType) {
 		RequestType = new byte[] { RequestType[0], RequestType[1] };
 		this.requestType = RequestType;
+	}
+	public String getSender() {
+		return Sender;
+	}
+	public void setSender(String destinationName) {
+		Sender = destinationName;
 	}
 
 	public byte[] IGetRequestType() {

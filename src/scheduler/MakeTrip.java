@@ -2,88 +2,88 @@ package scheduler;
 
 import enums.SystemEnumTypes;
 
-/*
- * This class deals with the trip requests that have been made and contains 
- * getters and setters for the user current and destination locations respectively.
+/**
+ * The TripRequest will model a trip request. It includes a pickup floor, destination floor and a direction.
+ *
  */
 public class MakeTrip {
-
 	private int userinitalLocation;
 	private int userFinalLocation;
-	private SystemEnumTypes.Direction elevatorDirection;
-	private boolean destinationStatus;
-
+	private SystemEnumTypes.Direction direction;
+	private boolean hasDestination;
+	
 	public MakeTrip(int pickupFloor, SystemEnumTypes.Direction direction) {
 		this.userinitalLocation = pickupFloor;
-		this.destinationStatus = false;
-		this.elevatorDirection = direction;
+		this.hasDestination = false;
+		this.direction = direction;
 	}
-
-	/**
-	 * This method sets a flag for the elevator such that it tells if the elevator
-	 * has been assigned a job
-	 * 
-	 * @return true if the current elevator has been assigned a floor to visit
-	 */
+	
 	public boolean hasDestination() {
-		return this.destinationStatus;
+		return this.hasDestination;
 	}
-
 	/**
-	 * @return this method returns the initial floor on which the user is located
+	 * Get the pickup floor.
+	 * @return
 	 */
 	public int getUserinitalLocation() {
 		return this.userinitalLocation;
 	}
-
+	
 	/**
-	 * @return this method returns the final floor on which the user is planning to
-	 *         go
+	 * Get the destination floor.
+	 * @return
 	 */
 	public int getUserFinalLocation() {
 		return this.userFinalLocation;
 	}
-
+	
 	/**
-	 * This method is responsible for setting up the user final location
-	 * 
-	 * @param destinationFloor the locaiton that the user wants to reach
+	 * Set the destination floor.
+	 * @param destinationFloor
 	 */
 	public void setDestinationFloor(int destinationFloor) {
 		this.userFinalLocation = destinationFloor;
-		this.destinationStatus = true;
+		this.hasDestination = true;
 	}
-
+	
 	/**
-	 * @return this method returns the direction in which the elevator is currently
-	 *         moving
+	 * Get the direction.
+	 * @return
 	 */
 	public SystemEnumTypes.Direction getElevatorDirection() {
-		return this.elevatorDirection;
+		return this.direction;
 	}
-
+	
 	/**
-	 * An equals method that checks if the object that is being passed is an
-	 * instance of TripRequest class.
-	 * 
-	 * @param trip refers to the Trip that user wants to make
-	 * @return true if the requested trip is an instance of the Trip class
+	 * A way to compare trip request objects. This is used to prevent duplicate trip requests in any set collection.
+	 * @param tripRequest
+	 * @return
 	 */
-	public boolean equals(MakeTrip trip) {
-		if ((this.userinitalLocation == trip.getUserinitalLocation())
-				&& (this.userFinalLocation == trip.getUserFinalLocation())
-				&& (this.elevatorDirection == trip.getElevatorDirection())) {
+	public boolean equals(MakeTrip tripRequest) {
+		if ((this.userinitalLocation == tripRequest.getUserinitalLocation()) && (this.userFinalLocation == tripRequest.getUserFinalLocation()) && (this.direction == tripRequest.getElevatorDirection()) ) {
 			return true;
 		}
 		return false;
 	}
-
+	
 	/**
-	 * This method formats the output as (userinitalLocation, userFinalLocation)
+	 * Coordinate notation to depict a trip request ex -> (pickup, destination)
 	 */
 	public String toString() {
-		String s = "";
-		s += "(" + this.userinitalLocation + "," + this.userFinalLocation + ")";
-		return s;
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("(");
+		sb.append(this.userinitalLocation);
+		sb.append(",");
+		sb.append(this.direction);
+		sb.append(",");
+		if (this.hasDestination) {
+			sb.append(this.userFinalLocation);
+		} else {
+			sb.append("?");
+		}
+		sb.append(")");
+
+		return sb.toString();
 	}
 }

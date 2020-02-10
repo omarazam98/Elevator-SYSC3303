@@ -1,17 +1,19 @@
 package info;
 
 import java.net.DatagramPacket;
-
 import java.util.Arrays;
 
 import enums.SystemEnumTypes;
 import requests.DirectionLampRequest;
 import requests.ElevatorArrivalRequest;
+import requests.ElevatorDestinationRequest;
 import requests.ElevatorDoorRequest;
 import requests.ElevatorLampRequest;
 import requests.ElevatorMotorRequest;
+import requests.ElevatorWaitRequest;
 import requests.FloorButtonRequest;
 import requests.FloorLampRequest;
+import requests.LampRequest;
 import requests.Request;
 
 public final class Helper {
@@ -22,13 +24,16 @@ public final class Helper {
 	 * Creates a datagram packet from a request class
 	 * 
 	 * @param request Request create a packet for
-	 * @return Datagram packet containing the data, ready to send
+	 * @return Datagram packet containing the data, ready to send (does not contain
+	 *         host or port)
 	 * @throws InvalidRequestException In case the request contains null
 	 *                                 information, it will be invalid
 	 */
 	public static DatagramPacket CreateRequest(Request request) {
 		MutInt counter = new MutInt(0);
 		byte[] data = new byte[buffer_size];
+
+		/* Populate a general request */
 		// add initial 0 byte
 		data[counter.getAndIncrement()] = 0;
 		// populate optional params
@@ -57,7 +62,6 @@ public final class Helper {
 		// int data_length = packet.getLength();
 		// if(data.length != data_length) throw Invalid();
 		MutInt counter = new MutInt(0);
-		System.out.println("df shdsfi" + counter);
 		if (data[counter.getAndIncrement()] != 0) {
 			System.out.println("Could not parse data. Invalid request.");
 		}
@@ -68,19 +72,15 @@ public final class Helper {
 		Request request = ParseOnType(data, RequestType, counter);
 		IncludeParams(SrcDests, request);
 		return request;
-
 	}
 
 	private static void IncludeParams(String[] arr, Request request) {
 		if (arr[0] != "")
-			request.setSource(arr[0]);
+			request.Sender = arr[0];
 		if (arr[1] != "")
-			request.setDestination(arr[1]);
+			request.Receiver = arr[1];
 	}
 
-	/**
-	 * source and destination parser
-	 */
 	private static String[] ParseSrcDest(byte[] data, MutInt counter) {
 		boolean IncludeSrcName = RTF(data[counter.getAndAdd(2)]), IncludeDestName = RTF(data[counter.getAndAdd(2)]);
 
@@ -99,13 +99,10 @@ public final class Helper {
 		return res;
 	}
 
-	/**
-	 * parser for the request type
-	 */
 	private static Request ParseOnType(byte[] data, byte[] rt, MutInt counter) {
 		Request request = null;
-		if (Arrays.equals(rt, DirectionLampRequest.getRequestType())) {
-			/* Parse based on Direction Lamp Request */
+		if (Arrays.equals(rt, ElevatorLampRequest.getRequestType())) {
+			/* Parse based on SystemEnumTypes.Direction Lamp Request */
 			SystemEnumTypes.Direction direction = (SystemEnumTypes.Direction) ParseEnum(data,
 					SystemEnumTypes.Direction.class, counter);
 			SystemEnumTypes.FloorDirectionLampStatus status = (SystemEnumTypes.FloorDirectionLampStatus) ParseEnum(data,
@@ -142,10 +139,10 @@ public final class Helper {
 			/* Parse based on Floor Button Request */
 			String DateString = ParseString(data, counter);
 			String FloorName = ParseString(data, counter);
-			SystemEnumTypes.Direction Direction = (SystemEnumTypes.Direction) ParseEnum(data,
+			SystemEnumTypes.Direction direction = (SystemEnumTypes.Direction) ParseEnum(data,
 					SystemEnumTypes.Direction.class, counter);
-			String DestinationFloor = ParseString(data, counter);
-			request = new FloorButtonRequest(DateString, FloorName, Direction, DestinationFloor);
+			String Destination = ParseString(data, counter);
+			request = new FloorButtonRequest(DateString, FloorName, direction, Destination);
 
 		} else if (Arrays.equals(rt, FloorLampRequest.getRequestType())) {
 			/* Parse based on Floor Lamp Request */
@@ -154,26 +151,37 @@ public final class Helper {
 			SystemEnumTypes.FloorDirectionLampStatus status = (SystemEnumTypes.FloorDirectionLampStatus) ParseEnum(data,
 					SystemEnumTypes.FloorDirectionLampStatus.class, counter);
 			request = new FloorLampRequest(Direction, status);
+		} else if (Arrays.equals(rt, ElevatorDestinationRequest.getRequestType())) {
+			/* Parse based on Elevator Destination Request */
+			String PickupFloor = ParseString(data, counter);
+			String DestFloor = ParseString(data, counter);
+			String ElevatorName = ParseString(data, counter);
+			request = new ElevatorDestinationRequest(PickupFloor, DestFloor, ElevatorName);
+		} else if (Arrays.equals(rt, ElevatorWaitRequest.getRequestType())) {
+			/* Parse based on Elevator Wait Request */
+			String elevatorName = ParseString(data, counter);
+			request = new ElevatorWaitRequest(elevatorName);
 		}
 		return request;
 	}
 
 	private static byte[] ParseType(byte[] data, MutInt counter) {
 		byte[] array = new byte[] { data[counter.getAndIncrement()], data[counter.getAndIncrement()] };
-		if (data[counter.intValue()] == 0) {
+		if (data[counter.intValue()] == 0)
 			counter.getAndIncrement();
-		} else
+		else
 			System.out.println("Could not parse type of request. Data was invalid.");
 		return array;
 	}
 
-	/**
-	 * parser for the string
-	 */
 	private static String ParseString(byte[] data, MutInt counter) {
 		String ret = "";
 		if (data[counter.intValue()] != 0) {
-
+			// System.out.println("data: "+data[counter.intValue()]);
+			if (data[counter.intValue()] == (byte) -1) {
+				counter.add(2);
+				return ret;
+			}
 			// attempt to parse data
 			MutInt temp_counter = new MutInt(counter);
 			while (temp_counter.intValue() != data.length && data[temp_counter.getAndIncrement()] != 0)
@@ -186,48 +194,34 @@ public final class Helper {
 	}
 
 	private static <T extends Enum<T>> Enum<?> ParseEnum(byte[] data, Class<T> clazz, MutInt counter) {
-
 		Enum<?>[] enums = clazz.getEnumConstants();
-		System.out.println("feklefw e " + data.length + "fsdkej eiotr" + enums.length);
 		if ((((int) data[counter.intValue()]) - 1) < enums.length) {
 			return enums[((int) data[counter.getAndAdd(2)]) - 1];
-		}
-
-		// System.out.println("Enum parsing failed. Invalid data or non-defined ENUM.");
-		// System.exit(1);
-		else {
+		} else
 			System.out.println("Could not parse Enum; Invalid data or Enum does not exist.");
-		}
 		return null;
-
 	}
 
-	/**
-	 * populates the source and the destinaiton
-	 */
 	private static void PopulateSourceDest(byte[] data, Request request, MutInt counter) {
 
-		boolean IncludeSrcName = request.getSource() != null && !request.getSource().isEmpty(),
-				IncludeDestName = request.getDestination() != null && !request.getDestination().isEmpty();
+		boolean IncludeSrcName = request.Sender != null && !request.Sender.isEmpty(),
+				IncludeDestName = request.Receiver != null && !request.Receiver.isEmpty();
 
 		Populate(data, TF(IncludeSrcName), counter);
 		Populate(data, TF(IncludeDestName), counter);
 
 		// populate sender name with a string
 		if (IncludeSrcName) {
-			String SenderName = request.getSource();
+			String SenderName = request.Sender;
 			Populate(data, SenderName, counter);
 		}
 		// Populate Receiver name
 		if (IncludeDestName) {
-			String ReceiverName = request.getDestination();
+			String ReceiverName = request.Receiver;
 			Populate(data, ReceiverName, counter);
 		}
 	}
 
-	/*
-	 * true and false value
-	 */
 	private static String TF(boolean tf) {
 		if (tf)
 			return "T";
@@ -235,9 +229,6 @@ public final class Helper {
 			return "F";
 	}
 
-	/**
-	 * check for true and false
-	 */
 	private static boolean RTF(byte tf) {
 		if (tf == 'T')
 			return true;
@@ -245,20 +236,16 @@ public final class Helper {
 			return false;
 	}
 
-	/**
-	 * populates the enums
-	 */
 	private static void PopulateEnum(byte[] data, Enum<?> E, MutInt counter) {
 		data[counter.getAndIncrement()] = (byte) (E.ordinal() + 1); // add 1 to avoid 0-ordinal values
 		data[counter.getAndIncrement()] = 0;
 	}
 
 	private static void PopulateOnType(byte[] data, Request request, MutInt counter) {
-
-		if (request instanceof DirectionLampRequest) {
-			/* Direction Lamp Request is of the form 0DIR0STATUS0ACTION */
-			DirectionLampRequest req = (DirectionLampRequest) request;
-			PopulateEnum(data, req.getLampDirection(), counter);
+		if (request instanceof ElevatorLampRequest) {
+			/* SystemEnumTypes.Direction Lamp Request is of the form 0DIR0STATUS0ACTION */
+			ElevatorLampRequest req = (ElevatorLampRequest) request;
+			PopulateEnum(data, req.getCurrentStatus(), counter);
 			PopulateEnum(data, req.getCurrentStatus(), counter);
 
 		} else if (request instanceof ElevatorArrivalRequest) {
@@ -266,18 +253,19 @@ public final class Helper {
 			ElevatorArrivalRequest req = (ElevatorArrivalRequest) request;
 			Populate(data, req.getElevatorName(), counter);
 			Populate(data, req.getFloorName(), counter);
+			PopulateEnum(data, req.getDirection(), counter);
 
 		} else if (request instanceof ElevatorDoorRequest) {
 			/* Elevator Door Request is of form 0E_NAME0ACTION0 */
 			ElevatorDoorRequest req = (ElevatorDoorRequest) request;
 			if (req.getRequestAction() == null)
-				System.out.println("Received request with no data. Could not populate.");
-			// System.exit(1);
+				System.out.println("The request's action is null. Could not populate.");
 			Populate(data, req.getElevatorName(), counter);
 			PopulateEnum(data, req.getRequestAction(), counter);
 		} else if (request instanceof ElevatorLampRequest) {
 			/* Elevator Lamp Request is of the form 0E_NAME0E_BUTTON0STATUS0ACTION */
 			ElevatorLampRequest req = (ElevatorLampRequest) request;
+
 			Populate(data, req.getElevatorButton(), counter);
 			PopulateEnum(data, req.getCurrentStatus(), counter);
 		} else if (request instanceof ElevatorMotorRequest) {
@@ -293,15 +281,28 @@ public final class Helper {
 			PopulateEnum(data, req.getDirection(), counter);
 			Populate(data, req.getDestinationFloor(), counter);
 		} else if (request instanceof FloorLampRequest) {
-			/* Floor Button Request is of the form 0DIRECTION0ACTION */
+			/* Floor Button Request is of the form 0DIRECTION0ACTION0 */
 			FloorLampRequest req = (FloorLampRequest) request;
 			PopulateEnum(data, req.getDirection(), counter);
 			PopulateEnum(data, req.getCurrentStatus(), counter);
+		} else if (request instanceof ElevatorDestinationRequest) {
+			/* Floor Button Request is of the form 0FLOOR0 */
+			ElevatorDestinationRequest req = (ElevatorDestinationRequest) request;
+			Populate(data, req.getPickupFloor(), counter);
+			Populate(data, req.getDestinationFloor(), counter);
+			Populate(data, req.getElevatorName(), counter);
+		} else if (request instanceof ElevatorWaitRequest) {
+			/* Floor Button Request is of the form 0DIRECTION0ACTION0 */
+			ElevatorWaitRequest req = (ElevatorWaitRequest) request;
+			Populate(data, req.getElevatorName(), counter);
 		}
 	}
 
 	/**
-	 * populates the type
+	 * 
+	 * @param data
+	 * @param request
+	 * @param counter
 	 */
 	private static void PopulateType(byte[] data, Request request, MutInt counter) {
 		byte[] TypeCode = request.IGetRequestType();
@@ -312,7 +313,11 @@ public final class Helper {
 	}
 
 	private static void Populate(byte[] array, String array2, MutInt pos) {
-		CopyArray(array, array2.getBytes(), pos);
+		if (array2 == null) {
+			array[pos.getAndIncrement()] = (byte) -1;
+		} else {
+			CopyArray(array, array2.getBytes(), pos);
+		}
 		array[pos.getAndIncrement()] = 0;
 	}
 

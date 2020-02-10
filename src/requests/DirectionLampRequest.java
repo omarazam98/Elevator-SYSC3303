@@ -2,44 +2,47 @@ package requests;
 
 import enums.SystemEnumTypes;
 
-/**
- * This class deals with the requests for the elevator lamp
- */
-public class DirectionLampRequest extends LampRequest {
-
-	private SystemEnumTypes.Direction LampDirection;
-	// request type for parsing purposes
-
-	private static byte[] RequestType = new byte[] { 1, 1 };
-
+public class DirectionLampRequest extends LampRequest{
+	
 	/**
-	 * Creates a request to change the status of the direction lamp of a given floor
-	 * 
-	 * @param direction the direction that the elevator is currently moving in
-	 * @param status    the current status of lamp
+	 * Direction of the Floor's elevator up/down indicators
+	 */
+	private SystemEnumTypes.Direction LampDirection;
+	
+	/**
+	 * Type of request for parsing purposes
+	 */
+	private static byte[] RequestType = new byte[] {1,1};
+	
+	
+	/**
+	 * Create a request to change the status of the direction lamp of a given floor
+	 * @param direction the direction that the elevator is currently travelling in
+	 * @param status the status of the lamp
 	 */
 	public DirectionLampRequest(SystemEnumTypes.Direction direction, SystemEnumTypes.FloorDirectionLampStatus status) {
 		super(status);
 		this.setRequestType(RequestType);
 		this.LampDirection = direction;
+		// TODO Auto-generated constructor stub
 	}
 
 	/**
-	 * returns the the lamp light direction
+	 * {@link DirectionLampRequest#LampDirection}
 	 */
 	public SystemEnumTypes.Direction getLampDirection() {
 		return LampDirection;
 	}
 
 	/**
-	 * sets the the lamp light direction
+	 * {@link DirectionLampRequest#LampDirection}
 	 */
 	public void setLampDirection(SystemEnumTypes.Direction lampDirection) {
 		LampDirection = lampDirection;
 	}
 
 	/**
-	 * returns the request type
+	 * {@link DirectionLampRequest#RequestType}
 	 */
 	public static byte[] getRequestType() {
 		return RequestType;
