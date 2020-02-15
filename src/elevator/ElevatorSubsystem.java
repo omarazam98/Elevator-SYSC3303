@@ -11,7 +11,6 @@ import java.util.Queue;
 import requests.ElevatorArrivalRequest;
 import requests.ElevatorDestinationRequest;
 import requests.ElevatorDoorRequest;
-import requests.ElevatorLampRequest;
 import requests.ElevatorMotorRequest;
 import requests.ElevatorWaitRequest;
 import requests.Request;
@@ -75,9 +74,9 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		serverThread = new Thread(server, name);
 		serverThread.start();
 	}
+	
     public ElevatorSubsystem(String name,int port) {
     	this.name = name;
-    	this.events = new LinkedList<Request>();
     	server = new Server(this, port, this.debug);
 		serverThread = new Thread(server, name);
 		serverThread.start();
@@ -366,7 +365,8 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 				.getAllFloorSubsytemConfigurations();
 
 		int temp = 0;
-		for (String floor : floorConfigurations.keySet()) {
+		for (@SuppressWarnings("unused")
+		String floor : floorConfigurations.keySet()) {
 			// find amount of floors
 			temp += temp;
 		}
@@ -377,10 +377,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			HashMap<String, String> elevatorConfiguration = elevatorConfigurations.get(elevator);
 
 			// Create an instance of ElevatorSubsystem for this 'elevatorName'
-			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevator, Integer.parseInt(elevatorConfiguration.get("port")),
+			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevator,Integer.parseInt(elevatorConfiguration.get("port")),
 					Integer.parseInt(elevatorConfiguration.get("startFloor")), Integer.parseInt(schedulerConfiguration.get("port")),temp,
-					Integer.parseInt(elevatorConfiguration.get("timeBetweenFloors")), Integer.parseInt(elevatorConfiguration.get("passengerWaitTime")),
-					Integer.parseInt(elevatorConfiguration.get("doorOperationTime")));
+ 					Integer.parseInt(elevatorConfiguration.get("timeBetweenFloors")), Integer.parseInt(elevatorConfiguration.get("passengerWaitTime")),
+ 					Integer.parseInt(elevatorConfiguration.get("doorOperationTime")));
 					
 			// Spawn and start a new thread for this ElevatorSubsystem instance
 			Thread elevatorSubsystemThread = new Thread(elevatorSubsystem, elevator);
