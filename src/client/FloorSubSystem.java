@@ -286,7 +286,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 				Date r1Time = null;
 				Date r2Time = null;
 				try {
-					r1Time = sdf.parse(r1.getButtonPressTime());
+					r1Time = sdf.parse(r1.getButtonPressTime()); //change the format of time
 					r2Time = sdf.parse(r2.getButtonPressTime());
 				} catch (ParseException e) {
 					e.printStackTrace();
@@ -301,26 +301,24 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 			}
 		});
 
-		long lastTime = 0;
-
-		for (FloorButtonRequest currRequest : requests) { // Loop over requests
-			for (FloorSubSystem currFloor : floors) { // Loop over floors
-				if (currFloor.getName().equalsIgnoreCase(currRequest.getFloorName())) { // If request is meant for the
-																						// current floor
-
+		long lastTime = 0; //start
+		
+		// for every floor in each request
+		for (FloorButtonRequest currRequest : requests) { 
+			for (FloorSubSystem currFloor : floors) { 
+				if (currFloor.getName().equalsIgnoreCase(currRequest.getFloorName())) { 
+					// If request is meant for the current floor
+																						
 					long currReqTime = (sdf.parse(currRequest.getButtonPressTime())).getTime(); // Get time of request
 
-					// Measure time between last request and current, and sleep for the time
-					// difference
 					if (lastTime != 0) {
-						long timeDiff = currReqTime - lastTime;
 						try {
-							Thread.sleep(timeDiff);
+							Thread.sleep(currReqTime - lastTime);  //sleep for the time difference
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
 					}
-					// Send request to floor to be sent to scheduler
+					// Send request to floor
 					System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S"))
 							+ "] Request details // Time:" + currRequest.getButtonPressTime() + "  Floor Name: "
 							+ currRequest.getFloorName() + "  Direction: " + currRequest.getDirection()

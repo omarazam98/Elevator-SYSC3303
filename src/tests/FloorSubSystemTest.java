@@ -14,7 +14,7 @@ public class FloorSubSystemTest {
 	
 	@Before 
 	public void setUp() {
-		floorss = new FloorSubSystem("1", 2, 3);
+		floorss = new FloorSubSystem("1", 2, 3, null);
 	}
 	
 	

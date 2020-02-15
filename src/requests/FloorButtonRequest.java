@@ -3,21 +3,17 @@ package requests;
 import enums.SystemEnumTypes;
 
 /**
- * This class deals with the FloorButtonRequests
+ * This class used to pass info to deal with event of floor button pressed
  *
  */
 public class FloorButtonRequest extends Request {
 
-	// the time for the button press
 	private String buttonPressTime;
-	// the name for the current floor e.g., 1 ,2 etc
 	private String currentFloorName;
-	// the direction of the pressed button
-	private SystemEnumTypes.Direction pressedButtonDirection;
-	// the final floor where the user wants to go
+	private SystemEnumTypes.Direction ButtonPressed; //used to sign which button is pressed (UP/DOWN)
 	private String DestinationFloor;
-	// for parsing the input form the configuration file
-	private static byte[] RequestType = new byte[] { 1, 6 };
+	
+	private static byte[] RequestType = new byte[] {1, 6};
 
 	/**
 	 * Constructor
@@ -32,7 +28,7 @@ public class FloorButtonRequest extends Request {
 		this.setRequestType(RequestType);
 		this.buttonPressTime = time;
 		this.currentFloorName = FloorName;
-		this.pressedButtonDirection = Direction;
+		this.ButtonPressed = Direction;
 		this.DestinationFloor = destinationFloor;
 	}
 
@@ -53,11 +49,11 @@ public class FloorButtonRequest extends Request {
 	}
 
 	public SystemEnumTypes.Direction getDirection() {
-		return pressedButtonDirection;
+		return ButtonPressed;
 	}
 
 	public void setDirection(SystemEnumTypes.Direction direction) {
-		pressedButtonDirection = direction;
+		ButtonPressed = direction;
 	}
 
 	public String getDestinationFloor() {

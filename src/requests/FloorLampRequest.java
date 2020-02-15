@@ -3,15 +3,14 @@ package requests;
 import enums.SystemEnumTypes;
 
 /**
- * This class deals with the FloorLamp requests
+ * This class pass info of light up floor lamp
+ * 
  *
  */
 public class FloorLampRequest extends LampRequest {
 
 	// direction of the floor's button to light up
 	private SystemEnumTypes.Direction Direction;
-
-	// request type for parsing purposes
 
 	private static byte[] RequestType = new byte[] { 1, 7 };
 
@@ -27,23 +26,14 @@ public class FloorLampRequest extends LampRequest {
 		this.Direction = Direction;
 	}
 
-	/**
-	 * gets the direction of the floor lamp
-	 */
 	public SystemEnumTypes.Direction getDirection() {
 		return Direction;
 	}
 
-	/**
-	 * sets the direction of the floor lamp
-	 */
 	public void setDirection(SystemEnumTypes.Direction direction) {
 		Direction = direction;
 	}
 
-	/**
-	 * gets the request type
-	 */
 	public static byte[] getRequestType() {
 		return RequestType;
 	}
