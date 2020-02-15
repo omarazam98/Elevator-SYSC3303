@@ -26,7 +26,7 @@ import enums.SystemEnumTypes.RequestEvent;
  * communicate with it This class is responsible for the elevator system
  * management
  * 
- * @author JCS
+ * @author Tian
  *
  */
 public class ElevatorSubsystem implements Runnable, ElevatorEvents {
@@ -154,7 +154,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	}
 
 	/*
-	 * deals with the elevator move down event
+	 * Deals with the elevator move down event
 	 */
 	private void elevatorDown() {
 		if (this.state.getDoorStatus() != ElevatorCurrentDoorStatus.OPEN) {
@@ -240,21 +240,25 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
  			this.sendServer(request);
  		}
  	}
-
+	 /*
+	  * Deals with destination request
+	  */
  	private void DestinationRequest(ElevatorDestinationRequest request){
  		this.toggleLamp(Integer.parseInt(request.getDestinationFloor()), true);
+ 		this.toString(RequestEvent.SENT, "Scheduler", "Destination request to"+request.getDestinationFloor());
  		this.sendServer(request);
  		boolean tempflag = false;
  		int size = this.events.size();
  		if(this.destinationRequestFlag) {
  			for (int count = 0; count < size; count++) {
  				Request head = events.peek();
- 				if (head instanceof ElevatorDestinationRequest) {
+ 				if (!(head instanceof ElevatorDestinationRequest)) {
  					tempflag = true;
  				}
  			}
  			if (tempflag) {
  				ElevatorWaitRequest sendRequest = new ElevatorWaitRequest(this.name);
+ 				this.toString(RequestEvent.SENT,"Scheduler","Wait complete.");
  				this.sendServer(sendRequest);
  				this.destinationRequestFlag = false;
  			}
