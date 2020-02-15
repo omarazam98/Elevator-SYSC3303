@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<java version="11.0.4" class="java.beans.XMLDecoder">
+<java version="1.8.0_181" class="java.beans.XMLDecoder">
  <object class="com.horstmann.violet.ClassDiagramGraph">
   <void method="addNode">
    <object class="com.horstmann.violet.InterfaceNode" id="InterfaceNode0">
@@ -41,12 +41,17 @@ ElevatorEvents</string>
 -state : ElevatorState
 -debug : boolean
 -schedulerPort : int
--name : String</string>
+-name : String
+-traveltime:int
+-passengertime:int
+-doortime:int
+-deatinationRequestFlag:boolean</string>
      </void>
     </void>
     <void property="methods">
      <void property="text">
-      <string>+ElevatorSubsystem(String: name, int: port, int: start, int: schedulerPort , int: totalNum): void
+      <string>+ElevatorSubsystem(Stirng:name,int port)
++ElevatorSubsystem(String: name, int: port, int: start, int: schedulerPort , int: totalNum): void
 +receiveEvent(Request: event):void
 +getNextEvent(): Request
 +getName(): String
@@ -60,6 +65,8 @@ ElevatorEvents</string>
 -toString(output: String): void
 -toString(event: RequestEvent, receiver: String, output: String): void
 -handleRequest(event: Request)
+-DestinationRequest(request ElevatorDestinationRequest):void
+-WaitforPassengers():void
 +run(): void
 main(args: String[]): void</string>
      </void>
@@ -75,19 +82,19 @@ main(args: String[]): void</string>
      <string>x</string>
      <void method="set">
       <object idref="Point2D$Double1"/>
-      <double>410.0</double>
+      <double>300.0</double>
      </void>
     </void>
     <void class="java.awt.geom.Point2D$Double" method="getField">
      <string>y</string>
      <void method="set">
       <object idref="Point2D$Double1"/>
-      <double>500.0</double>
+      <double>490.0</double>
      </void>
     </void>
     <void method="setLocation">
-     <double>410.0</double>
-     <double>500.0</double>
+     <double>300.0</double>
+     <double>490.0</double>
     </void>
    </object>
   </void>
@@ -112,6 +119,9 @@ main(args: String[]): void</string>
 +init(elevatorConfiguration: HashMap&lt;String, HashMap&lt;String, String&gt;&gt;, floorConfigurations: HashMap&lt;String, HashMap&lt;String, String&gt;&gt;): void
 +run(): void
 -eventHandler(event: Request): void
+-eventElevatorDestinationRequest(elevatorname:String,pickupFloor:Integer,destinationFloor:Integer):void
+-eventElevatorWaitComplete(elevatorName:String):void
+-planningSystem(tripRequest:Maketrip):Monitor
 -incomingTripRequest(currentFloorNumber: int, destinationFloorNumber: int, direction: Direction): void
 -sendToServer(request: Request, port: int): void
 -assignTripToFreeElevator(elevatorName: String, requestedTrip: MakeTrip): boolean
@@ -168,7 +178,10 @@ main(args: String[]): void</string>
 -schedulerPort : int
 -debug : boolean
 -floorLamp_UP : FloorDirectionLampStatus
--floorLamp_DOWN : FloorDirectionLampStatus</string>
+-floorLamp_DOWN : FloorDirectionLampStatus
+-upReqList:Queue&lt;FloorButtonRequest&gt; 
+-downReqList:Queue&lt;FloorButtonRequest&gt; 
+-elevatorPorts:HashMap&lt;String, Integer&gt; </string>
      </void>
     </void>
     <void property="methods">
@@ -304,14 +317,17 @@ Runnable</string>
      <void property="text">
       <string>-userinitalLocation : int
 -userFinalLocation : int
--elevatorDirection : Direction</string>
+-elevatorDirection : Direction
+-hasDestination:boolean </string>
      </void>
     </void>
     <void property="methods">
      <void property="text">
       <string>+MakeTrip(initialFloor: int, finalFloor: int): void
++hasDestination():boolean
 +getUserinitalLocation(): int
 +getUserFinalLocation(): int
++setDestinationFloor(destinationFloor:int)
 +getElevatorDirection(): Direction
 +equals(trip: MakeTrip): boolean
 +toString(): String</string>
@@ -348,13 +364,13 @@ Runnable</string>
    <object class="com.horstmann.violet.ClassNode" id="ClassNode5">
     <void property="attributes">
      <void property="text">
-      <string>currentELevatorName : String
-requestInQueue : LinkedHashSet&lt;MakeTrip&gt;
-destinationFloor : HashSet&lt;Integer&gt;
-requestFloor : HashSet&lt;Integer&gt;
-queueDirection : Direction
-tripRequestCompletionSuccess : ArrayList&lt;MakeTrip&gt;
-elevatorCurrentState : ElevatorState</string>
+      <string>-currentELevatorName : String
+-requestInQueue : LinkedHashSet&lt;MakeTrip&gt;
+-destinationFloor : HashSet&lt;Integer&gt;
+-requestFloor : HashSet&lt;Integer&gt;
+-queueDirection : Direction
+-tripRequestCompletionSuccess : ArrayList&lt;MakeTrip&gt;
+-elevatorCurrentState : ElevatorState</string>
      </void>
     </void>
     <void property="methods">
@@ -363,21 +379,27 @@ elevatorCurrentState : ElevatorState</string>
 +getElevatorStatus(): Object
 +isEmpty(): boolean
 +addFirstTripRequest(tripRequest: MakeTrip): boolean
-+updateElevatorDirection(nextDirection: Direction): coid
++updateElevatorDirection(nextDirection: Direction): void
 +getNextElevatorDirection(): Direction
 -getHighestScheduledFloor(): Integer
 -getLowestScheduledFloor(): int
++isWaitingForDestinationRequest():boolean 
++addDestination(pickupFloor:Integer ,destinationFloor: Integer ):boolean 
 +updateElevatorDoorStatus(updatedDoorState: ElevatorCurrentDoorStatus): void
 +updateElevatorStatus(updatedElevatorStatus: ElevatorCurrentStatus): void
 +stopOccurred(): HashSet&lt;MakeTrip&gt;
++addTripRequest(tripRequest:MakeTrip):boolean 
 -removePickupFloor(floor: int): boolean
 -isDestinationFloor(currentFloor: int): boolean
 -removeDestinationFloor(currentFloor: int): boolean
 -removeTripsWithDestinationFloor(currentFloor: int): HashSet&lt;MakeTrip&gt;
-+getQueueDirection(): Object
++getQueueDirection():Direction
++getElevatorDirection():Direction 
 +addEnRouteTripRequest(tripRequest: MakeTrip): boolean
++estimatePickupTime(tripRequest:MakeTrip ):Integer 
 +getElevatorFloorLocation(): Integer
 +getElevatorStartingFloorLocation(): Integer
++getCurrentElevatorName():String 
 +updateElevatorFloorLocation(floorNumber: int): void
 +isStopRequired(floorNumber: int): boolean
 +isPickupFloor(floorNumber: int): boolean
