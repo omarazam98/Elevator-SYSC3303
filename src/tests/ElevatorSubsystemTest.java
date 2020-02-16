@@ -11,7 +11,11 @@ import org.junit.*;
 
 import elevator.ElevatorSubsystem;
 import elevator.ElevatorSystemConfiguration;
-
+/**
+ * 
+ * Test class for ElevatorSubsystem
+ *
+ */
 public class ElevatorSubsystemTest {
 	
 	
@@ -23,7 +27,7 @@ public class ElevatorSubsystemTest {
 	DatagramPacket packet3 = null;
 	
 
-	@Before
+	@Before//initial setup
 	public void setUp() throws Exception {
 		
 		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration.getAllElevatorSubsystemConfigurations();
@@ -58,7 +62,7 @@ public class ElevatorSubsystemTest {
 		
 		}
 	
-	@Test//testing send and receive
+	@Test//testing send and receive message from server
 	public void testPacketSnR(){
 		try {
 			//Send to Elevator 1

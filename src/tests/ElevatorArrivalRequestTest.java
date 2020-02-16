@@ -7,19 +7,23 @@ import org.junit.Test;
 
 import enums.SystemEnumTypes;
 import requests.ElevatorArrivalRequest;
-
+/**
+ * Test class for ElevatorArrivalRequest
+ * @author 
+ *
+ */
 public class ElevatorArrivalRequestTest {
 
     private ElevatorArrivalRequest ElevatorArrivalReq;
     static String floorName = "Lobby";
     static String elevatorName = "Main";
 
-    @Before
+    @Before//initial set up for elevator request 
     public void setUp() throws Exception {
         ElevatorArrivalReq = new ElevatorArrivalRequest( elevatorName, floorName, SystemEnumTypes.Direction.UP);
     }
 
-    @Test
+    @Test//test set and get name
     public void TestGetSetNames() {
         assertEquals(ElevatorArrivalReq.getElevatorName(),  elevatorName);
         ElevatorArrivalReq.setElevatorName("Secondary");
@@ -30,7 +34,7 @@ public class ElevatorArrivalRequestTest {
         assertEquals(ElevatorArrivalReq.getFloorName(), "Pent House");
     }
 
-    @Test
+    @Test//test set and get direction
     public void testGetSetDirection() {
         assertEquals(ElevatorArrivalReq.getDirection(), SystemEnumTypes.Direction.UP);
         ElevatorArrivalReq.setDirection(SystemEnumTypes.Direction.DOWN);

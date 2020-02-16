@@ -7,17 +7,21 @@ import org.junit.Test;
 
 import enums.SystemEnumTypes;
 import requests.LampRequest;
-
+/**
+ * 
+ * Test class for LampRequest
+ *
+ */
 public class LampRequestTest {
 
     private LampRequest LampReq;
 
-    @Before
+    @Before//initial setup()
     public void setUp() throws Exception {
         LampReq = new LampRequest(SystemEnumTypes.FloorDirectionLampStatus.ON);
     }
 
-    @Test
+    @Test//set and get status
     public void testGetSetStatus() {
         assertEquals( LampReq.getCurrentStatus(), SystemEnumTypes.FloorDirectionLampStatus.ON);
         LampReq.setCurrentStatus(SystemEnumTypes.FloorDirectionLampStatus.OFF);

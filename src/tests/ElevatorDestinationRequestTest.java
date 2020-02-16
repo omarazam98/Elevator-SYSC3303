@@ -6,7 +6,11 @@ import org.junit.Test;
 
 import enums.SystemEnumTypes;
 import requests.ElevatorDestinationRequest;
-
+/**
+ * Test class for ElevatorDestinationRequest
+ *
+ *
+ */
 public class ElevatorDestinationRequestTest {
 
     private ElevatorDestinationRequest ElevatorDestinationReq;
@@ -14,12 +18,12 @@ public class ElevatorDestinationRequestTest {
     static String destName = "Lobby";
     static String elevatorName = "Main";
 
-    @Before
+    @Before//initial set up for elevator destination request 
     public void setUp() throws Exception {
         ElevatorDestinationReq = new ElevatorDestinationRequest(pickupFloor, destName, elevatorName);
     }
 
-    @Test
+    @Test//test set and get name
     public void TestGetSetNames() {
         assertEquals(ElevatorDestinationReq.getDestinationFloor(), destName);
         ElevatorDestinationReq.setDestinationFloor("Pent House");
@@ -30,7 +34,7 @@ public class ElevatorDestinationRequestTest {
         assertEquals(ElevatorDestinationReq.getElevatorName(), "Secondary");
     }
 
-    @Test
+    @Test//test set and get pickup floor
     public void TestGetSetPickupFloor() {
         assertEquals(ElevatorDestinationReq.getPickupFloor(), pickupFloor);
         ElevatorDestinationReq.setPickupFloor("3");
