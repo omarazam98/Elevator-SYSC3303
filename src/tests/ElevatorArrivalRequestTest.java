@@ -8,7 +8,7 @@ import org.junit.Test;
 import enums.SystemEnumTypes;
 import requests.ElevatorArrivalRequest;
 /**
- * Test class for ElevatorArrivalRequest
+ * Test class for ElevatorArrivalRequest//
  * @author 
  *
  */
