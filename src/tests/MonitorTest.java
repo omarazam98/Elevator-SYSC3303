@@ -25,7 +25,7 @@ public class MonitorTest {
 
 	@Test
 	public void TestisEmpty() {
-		assertEquals(monitor.isEmpty(), true);
+		assertEquals(monitor.isTripQueueEmpty(), true);
 	}
 	
 	@Test

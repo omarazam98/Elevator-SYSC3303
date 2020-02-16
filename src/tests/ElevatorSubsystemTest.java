@@ -1,22 +1,16 @@
 package tests;
 
-import static org.junit.Assert.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.Queue;
 
 import org.junit.*;
 
 import elevator.ElevatorSubsystem;
 import elevator.ElevatorSystemConfiguration;
-import server.Server;
 
 public class ElevatorSubsystemTest {
 	
@@ -40,7 +34,7 @@ public class ElevatorSubsystemTest {
 			HashMap<String, String> elevatorConfiguration = elevatorConfigurations.get(elevatorName);
 			
 			//Create an instance of ElevatorSubsystem for this 'elevatorName'
-			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName, Integer.parseInt(elevatorConfiguration.get("port")));
+			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName, Integer.parseInt(elevatorConfiguration.get("port")), 0, 0, 0, 0, 0, 0);
 			
 			Thread elevatorSubsystemThread = new Thread(elevatorSubsystem, elevatorName);
 			elevatorSubsystemThread.start();

@@ -64,7 +64,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
      * @param schedulerPort
      * @param elevatorConfiguration
      */
-    private FloorSubSystem(String name, int port, int schedulerPort, HashMap<String, HashMap<String, String>> elevatorConfiguration) {
+    public FloorSubSystem(String name, int port, int schedulerPort, HashMap<String, HashMap<String, String>> elevatorConfiguration) {
         //Set fields
         this.name = name;
         this.upQueue = new LinkedList<FloorButtonRequest>();
