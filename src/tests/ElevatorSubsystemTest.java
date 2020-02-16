@@ -17,7 +17,11 @@ import org.junit.*;
 import elevator.ElevatorSubsystem;
 import elevator.ElevatorSystemConfiguration;
 import server.Server;
-
+/**
+ * Test class for elevator subsystem
+ * @author Tian
+ *
+ */
 public class ElevatorSubsystemTest {
 	
 	
@@ -30,6 +34,11 @@ public class ElevatorSubsystemTest {
 	
 
 	@Before
+	/**
+	 * This is to set the initial constructor
+	 * @throws Exception
+	 */
+	
 	public void setUp() throws Exception {
 		
 		HashMap<String, HashMap<String, String>> elevatorConfigurations = ElevatorSystemConfiguration.getAllElevatorSubsystemConfigurations();
