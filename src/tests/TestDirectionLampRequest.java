@@ -19,8 +19,8 @@ public class TestDirectionLampRequest {
 
     @Test
     public void testGetSetDirection() {
-        assertEquals(SystemEnumTypes.Direction.DOWN , DirectionLampReq.getLampDirection());
-        DirectionLampReq.setLampDirection(SystemEnumTypes.Direction.DOWN);
         assertEquals(SystemEnumTypes.Direction.UP , DirectionLampReq.getLampDirection());
+        DirectionLampReq.setLampDirection(SystemEnumTypes.Direction.DOWN);
+        assertEquals(SystemEnumTypes.Direction.DOWN , DirectionLampReq.getLampDirection());
     }
 }

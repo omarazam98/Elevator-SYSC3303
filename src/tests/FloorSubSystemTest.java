@@ -2,6 +2,8 @@ package tests;
 
 import static org.junit.Assert.*;
 
+import java.util.HashMap;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +16,12 @@ public class FloorSubSystemTest {
 	
 	@Before 
 	public void setUp() {
-		floorss = new FloorSubSystem("1", 2, 3, null);
+		HashMap<String, HashMap<String, String>> tempConfig = new HashMap<String, HashMap<String, String>>();
+		HashMap<String, String> tempEle = new HashMap<String, String>();
+		tempEle.put("port", "2000");
+		tempConfig.put("E1", tempEle);
+		
+		floorss = new FloorSubSystem("1", 2, 3, tempConfig);
 	}
 	
 	
