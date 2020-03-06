@@ -1,4 +1,3 @@
-
 package tests;
 
 import static org.junit.Assert.assertEquals;
@@ -22,25 +21,25 @@ public class RequestTest {
     private Request req1 = null;
     private Request req2 = null;
 
-    @Before
+    @Before//initial setup()
     public void setUp() throws Exception {
         req1 = new Request(new Date(), 1, "UP", 3);
         req2 = new Request(new Date(), 2, "DOWN", 4);
     }
 
-    @Test
+    @Test//test Request() default constructor
     public void testRequest() {
         Request testReq = new Request(new Date(), 1, "UP", 3);
         assertTrue(testReq instanceof Request);
     }
 
-    @Test
+    @Test//test GetFloor()
     public void testGetFloor() {
         // req1's floor # should equal to 1
         assertEquals(req1.getFloor(), 1);
     }
 
-    @Test
+    @Test//test SetFloor()
     public void testSetFloor() {
         // req1's floor # should equal to 1
         assertTrue(req1.getFloor() == 1);
@@ -53,13 +52,13 @@ public class RequestTest {
 
     }
 
-    @Test
+    @Test//test GetCarButton() 
     public void testGetCarButton() {
         // req1's carButton # should equal to 1
         assertEquals(req1.getCarButton(), 3);
     }
 
-    @Test
+    @Test//test SetCarButton()
     public void testSetCarButton() {
         // req1's carButton # should equal to 1
         assertTrue(req1.getCarButton() == 3);
@@ -70,20 +69,20 @@ public class RequestTest {
         assertEquals(req1.getCarButton(), 5);
     }
 
-    @Test
+    @Test//test GetTime()
     public void testGetTime() {
         // tests if req1's time field has been initialized
         assertTrue(req1.getTime() != null);
         assertTrue(req1.getTime() instanceof Date);
     }
 
-    @Test
+    @Test//test GetDirec()
     public void testGetDirec() {
         // req1's direction should be UP
         assertEquals(req1.getDirec(), "UP");
     }
 
-    @Test
+    @Test//test SetDirec()
     public void testSetDirec() {
         // req1's direction should be UP
         assertEquals(req1.getDirec(), "UP");

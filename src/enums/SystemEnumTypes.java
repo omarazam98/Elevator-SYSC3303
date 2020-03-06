@@ -18,11 +18,17 @@ public class SystemEnumTypes {
 	}
 
 	public enum ElevatorCurrentStatus {
-		MOVE, STOP;
+		MOVE, STOP, OUT_OF_SERVICE;
 	}
 
 	public enum ElevatorCurrentDoorStatus {
 		OPEN, CLOSE;
+	}
+	
+	public enum MonitoredSchedulerEvent {
+		ELEVATOR_MOVE,
+		ELEVATOR_OPEN_DOOR,
+		ELEVATOR_CLOSE_DOOR
 	}
 
 }

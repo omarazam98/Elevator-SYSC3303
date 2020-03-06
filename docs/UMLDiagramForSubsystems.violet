@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<java version="1.8.0_181" class="java.beans.XMLDecoder">
+<java version="11.0.4" class="java.beans.XMLDecoder">
  <object class="com.horstmann.violet.ClassDiagramGraph">
   <void method="addNode">
    <object class="com.horstmann.violet.InterfaceNode" id="InterfaceNode0">
@@ -35,17 +35,17 @@ ElevatorEvents</string>
    <object class="com.horstmann.violet.ClassNode" id="ClassNode0">
     <void property="attributes">
      <void property="text">
-      <string>-server : Server
--serverThread : Thread
--events : Queue&lt;Request&gt;
--state : ElevatorState
--debug : boolean
--schedulerPort : int
+      <string>server : Server
+serverThread : Thread
+events : Queue&lt;Request&gt;
+state : ElevatorState
+debug : boolean
+schedulerPort : int
 -name : String
--traveltime:int
--passengertime:int
--doortime:int
--deatinationRequestFlag:boolean</string>
+-traveltime : int
+-passengertime : int
+-doortime : int
+-destinationRequestFlag : boolean</string>
      </void>
     </void>
     <void property="methods">
@@ -65,8 +65,8 @@ ElevatorEvents</string>
 -toString(output: String): void
 -toString(event: RequestEvent, receiver: String, output: String): void
 -handleRequest(event: Request)
--DestinationRequest(request ElevatorDestinationRequest):void
--WaitforPassengers():void
+-destinationRequest(request ElevatorDestinationRequest):void
+-waitforPassengers():void
 +run(): void
 main(args: String[]): void</string>
      </void>
@@ -174,14 +174,15 @@ main(args: String[]): void</string>
      <void property="text">
       <string>-server : Server
 -floorNum : String
--eventRequest : Queue&lt;Request&gt;
 -schedulerPort : int
 -debug : boolean
--floorLamp_UP : FloorDirectionLampStatus
--floorLamp_DOWN : FloorDirectionLampStatus
--upReqList:Queue&lt;FloorButtonRequest&gt; 
--downReqList:Queue&lt;FloorButtonRequest&gt; 
--elevatorPorts:HashMap&lt;String, Integer&gt; </string>
+-requestsFile : String
+-buttonLamp_UP : FloorDirectionLampStatus
+-buttonLamp_DOWN : FloorDirectionLampStatus
+-upReqList : Queue&lt;FloorButtonRequest&gt;
+-downReqList : Queue&lt;FloorButtonRequest&gt;
+-elevatorPorts : HashMap&lt;String, Integer&gt;
+-eventsQueue : Queue&lt;Request&gt;</string>
      </void>
     </void>
     <void property="methods">
@@ -189,10 +190,13 @@ main(args: String[]): void</string>
       <string>+FloorSubSystem(floorNum: String, floorPort: int, schedulerPort: int)
 +getNextEvent(): Request
 +getName(): String
-+toggleFloorLamp(floorLamp: String, lamp: String): boolean
+-toggleFloorButtonLamp(Direction, FloorDirectionLampStatus): void
 +readingInputReq(fileName: String): List&lt;FloorButtonRequest&gt; 
 +receiveEvent(request: Request): void
--handleRequest(request: Request): void
+-sendRequestsToElevator(request: ElevatorArrivalRequest): void
+-getDirectionFromString(s: String): SystemEnumTypes.Direction
+-convertTime(dateString: String): Date
+-handleEvent(event: Request): void
 +run(): void
 +main(args: String[]): void</string>
      </void>
@@ -552,48 +556,48 @@ Runnable</string>
     <void property="bentStyle">
      <object class="com.horstmann.violet.BentStyle" field="HVH"/>
     </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="V"/>
+    </void>
+   </object>
+   <object idref="ClassNode1"/>
+   <object idref="ClassNode4"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="V"/>
+    </void>
+   </object>
+   <object idref="ClassNode1"/>
+   <object idref="ClassNode5"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
+    <void property="endArrowHead">
+     <object class="com.horstmann.violet.ArrowHead" field="V"/>
+    </void>
+   </object>
+   <object idref="ClassNode5"/>
+   <object idref="ClassNode4"/>
+  </void>
+  <void method="connect">
+   <object class="com.horstmann.violet.ClassRelationshipEdge">
+    <void property="bentStyle">
+     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
+    </void>
     <void property="startArrowHead">
      <object class="com.horstmann.violet.ArrowHead" field="DIAMOND"/>
     </void>
    </object>
-   <object idref="ClassNode2"/>
    <object idref="ClassNode3"/>
-  </void>
-  <void method="connect">
-   <object class="com.horstmann.violet.ClassRelationshipEdge">
-    <void property="bentStyle">
-     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
-    </void>
-    <void property="endArrowHead">
-     <object class="com.horstmann.violet.ArrowHead" field="V"/>
-    </void>
-   </object>
-   <object idref="ClassNode1"/>
-   <object idref="ClassNode4"/>
-  </void>
-  <void method="connect">
-   <object class="com.horstmann.violet.ClassRelationshipEdge">
-    <void property="bentStyle">
-     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
-    </void>
-    <void property="endArrowHead">
-     <object class="com.horstmann.violet.ArrowHead" field="V"/>
-    </void>
-   </object>
-   <object idref="ClassNode1"/>
-   <object idref="ClassNode5"/>
-  </void>
-  <void method="connect">
-   <object class="com.horstmann.violet.ClassRelationshipEdge">
-    <void property="bentStyle">
-     <object class="com.horstmann.violet.BentStyle" field="HVH"/>
-    </void>
-    <void property="endArrowHead">
-     <object class="com.horstmann.violet.ArrowHead" field="V"/>
-    </void>
-   </object>
-   <object idref="ClassNode5"/>
-   <object idref="ClassNode4"/>
+   <object idref="ClassNode2"/>
   </void>
  </object>
 </java>

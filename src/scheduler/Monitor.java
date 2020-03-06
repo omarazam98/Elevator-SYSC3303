@@ -27,7 +27,7 @@ public class Monitor {
 	public Monitor(String elevatorName, Integer elevatorStartFloorLocation, Integer currentElevatorFloorLocation,
 			SystemEnumTypes.Direction currentElevatorDirection,
 			SystemEnumTypes.ElevatorCurrentStatus currentElevatorStatus,
-			SystemEnumTypes.ElevatorCurrentDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors) {
+			SystemEnumTypes.ElevatorCurrentDoorStatus currentElevatorDoorStatus, Integer totalNumberOfFloors, Integer timeBetweenFloors, Integer passengerWaitTime, Integer doorOperationTime) {
 		this.currentElevatorName = elevatorName;
 		this.requestInQueue = new LinkedHashSet<MakeTrip>();
 		this.destinationFloors = new HashSet<Integer>();
@@ -35,7 +35,9 @@ public class Monitor {
 		this.tripRequestSuccess = new ArrayList<MakeTrip>();
 		this.queueDirection = SystemEnumTypes.Direction.STAY;
 		this.elevatorCurrentState = new ElevatorState(elevatorStartFloorLocation, currentElevatorFloorLocation,
-				currentElevatorDirection, currentElevatorStatus, currentElevatorDoorStatus, totalNumberOfFloors);
+				currentElevatorDirection, currentElevatorStatus, currentElevatorDoorStatus, totalNumberOfFloors, timeBetweenFloors, 
+				passengerWaitTime, 
+				doorOperationTime);
 	}
 
 	/**
@@ -128,6 +130,17 @@ public class Monitor {
 	public Integer getElevatorStartingFloorLocation() {
 		return this.elevatorCurrentState.getStartFloor();
 	}
+	public Integer getPassengerWaitTime() {
+		return this.elevatorCurrentState.getPassengerWaitTime();
+	}
+
+	public Integer getDoorOperationTime() {
+		return this.elevatorCurrentState.getDoorOperationTime();
+	}
+
+	public Integer getTimeBetweenFloors() {
+		return this.elevatorCurrentState.getTimeBetweenFloors();
+	}
 
 	/**
 	 * Estimates the pick up time from a floor
@@ -189,6 +202,14 @@ public class Monitor {
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Return the size of the queue.
+	 * @return
+	 */
+	public Integer getQueueLength() {
+		return this.requestInQueue.size();
 	}
 
 	/**
@@ -347,33 +368,36 @@ public class Monitor {
 	 */
 	@SuppressWarnings("incomplete-switch")
 	public boolean addDestination(Integer pickupFloor, Integer destinationFloor) {
-		boolean destinationFloorValid = false;
-		// Checks if the elevator can add the destination floor under elevators
-		// current state
-		// The destination must not require the elevator to change directions from its
-		// current location.
-		switch (this.queueDirection) {
-		case UP:
-			if (destinationFloor > this.elevatorCurrentState.getCurrentFloor()) {
-				destinationFloorValid = true;
-			}
-			break;
-		case DOWN:
-			if (destinationFloor < this.elevatorCurrentState.getCurrentFloor()) {
-				destinationFloorValid = true;
-			}
-			break;
-		}
+		
+		//Ensure that if the elevator is out of service, that it can not have any trips assigned to it
+				if (this.elevatorCurrentState.getCurrentStatus() == SystemEnumTypes.ElevatorCurrentStatus.OUT_OF_SERVICE) {
+					return false;
+				}
+				boolean destinationFloorValid = false;
+				//Check whether the elevator can take this destinationFloor given the elevators current state (the elevator must be in service of the queue (not travelling towards the first pickup floor)
+				//The destination must not require the elevator to change directions from its current location.
+				switch (this.queueDirection) {
+					case UP:
+						if (destinationFloor > this.elevatorCurrentState.getCurrentFloor()){
+							destinationFloorValid = true;
+						}
+						break;
+					case DOWN:
+						if (destinationFloor< this.elevatorCurrentState.getCurrentFloor()){
+							destinationFloorValid = true;		
+						}
+						break;
+				}
 
-		// If the destination floor is valid, add it to the destination floors queue and
-		// corresponding MakeTrip
-		if (destinationFloorValid) {
-			this.destinationFloors.add(destinationFloor);
-			this.addDestinationToMakeTrip(pickupFloor, destinationFloor);
-			return true;
-		} else {
-			return false;
-		}
+				//If the destination floor is valid, add it to the destination floors queue and add it to its corresponding tripRequest
+				if (destinationFloorValid) {
+					this.destinationFloors.add(destinationFloor);
+					this.elevatorCurrentState.toggleLamp(destinationFloor, true);
+					this.addDestinationToMakeTrip(pickupFloor, destinationFloor);
+					return true;
+				} else {
+					return false;
+				}
 	}
 
 	/**
@@ -403,6 +427,35 @@ public class Monitor {
 		} else {
 			return this.addEnRouteMakeTrip(makeTrip);
 		}
+	}
+	
+	/**
+	 * Unassigns all pending trip requests from this Elevator. 
+	 * By definition a pending trip request has not been started yet, so it's pickup floor 
+	 * will still be in the pickupFloors collection. Also the TripRequest will not have a destination yet.
+	 * This will remove all of the pending TripRequests from the queue and all the pending Trip's pickup floors
+	 * from the pickupFloors collection.
+	 * 
+	 * @return
+	 */
+	public ArrayList<MakeTrip> unassignPendingTripRequests(){
+		ArrayList<MakeTrip> pendingTripRequests = new ArrayList<MakeTrip>();
+		
+		//For each TripRequest in the queue, if the pickup has not yet been completed
+		//remove this TripRequest from the queue, add to pendingTripRequests (to be returned)
+		for (MakeTrip tripRequest : new ArrayList<MakeTrip>(this.requestInQueue)) {
+			if (this.pickupFloors.contains(tripRequest.getUserinitalLocation())){
+				pendingTripRequests.add(tripRequest);
+				this.requestInQueue.remove(tripRequest);
+			}
+		}
+		
+		//Now remove all pendingTripRequests from pickupFloors collection, (pendingTripRequests will not have a destination)
+		for (MakeTrip tripRequest : pendingTripRequests) {
+			this.pickupFloors.remove(tripRequest.getUserinitalLocation());
+		}
+		
+		return pendingTripRequests;
 	}
 
 	/**
@@ -589,6 +642,19 @@ public class Monitor {
 			}
 		}
 		return completedTrips;
+	}
+	/**
+	 * @return the elevatorState
+	 */
+	public ElevatorState getElevatorState() {
+		return elevatorCurrentState;
+	}
+
+	/**
+	 * @param elevatorState the elevatorState to set
+	 */
+	public void setElevatorState(ElevatorState elevatorState) {
+		this.elevatorCurrentState = elevatorState;
 	}
 
 	/**

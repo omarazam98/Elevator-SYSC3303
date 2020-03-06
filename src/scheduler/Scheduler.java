@@ -14,6 +14,7 @@ import java.util.Queue;
 import elevator.ElevatorEvents;
 import elevator.ElevatorSystemConfiguration;
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.MonitoredSchedulerEvent;
 import requests.ElevatorArrivalRequest;
 import requests.ElevatorDestinationRequest;
 import requests.ElevatorDoorRequest;
@@ -55,6 +56,12 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	private HashMap<String, Monitor> elevatorMonitorByElevatorName;
 	// will contain a list of requests in queue currently
 	private ArrayList<MakeTrip> pendingTripRequests;
+	private HashMap<Class<?>, ArrayList<Double>> eventElapsedTimes;
+	private HashMap<String, MonitoredEventTimer> monitoredSchedulerEvents; // key -> subsystemName, value ->
+																			// monitoredEventTimer
+	private HashMap<String, String> hostByElevatorName;
+	private HashMap<String, String> hostByFloorName;
+	private final double monitoredSchedulerDelayFactor = 1.25;
 
 	/**
 	 * The constructor
@@ -72,6 +79,12 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		this.portsByFloorName = new HashMap<String, Integer>();
 		this.elevatorMonitorByElevatorName = new HashMap<String, Monitor>();
 		this.pendingTripRequests = new ArrayList<MakeTrip>();
+
+		this.monitoredSchedulerEvents = new HashMap<String, MonitoredEventTimer>();
+		this.hostByElevatorName = new HashMap<String, String>();
+		this.hostByFloorName = new HashMap<String, String>();
+		this.eventElapsedTimes = new HashMap<Class<?>, ArrayList<Double>>();
+
 		this.init(elevatorConfiguration, floorConfigurations);
 
 		// Creating thread for the current instance of ElevatorSubsystem which will hold
@@ -97,13 +110,16 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			HashMap<String, String> config = elevatorConfiguration.get(elevatorName);
 
 			this.portsByElevatorName.put(elevatorName, Integer.parseInt(config.get("port")));
+			this.hostByElevatorName.put(elevatorName, config.get("host"));
 
-			// Initialize Monitors for each elevator
+			// Initialize elevatorMonitors for each elevator
 			this.elevatorMonitorByElevatorName.put(elevatorName,
 					new Monitor(elevatorName, Integer.parseInt(config.get("startFloor")),
 							Integer.parseInt(config.get("startFloor")), SystemEnumTypes.Direction.STAY,
 							SystemEnumTypes.ElevatorCurrentStatus.STOP, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN,
-							floorConfigurations.size()));
+							floorConfigurations.size(), Integer.parseInt(config.get("timeBetweenFloors")),
+							Integer.parseInt(config.get("passengerWaitTime")),
+							Integer.parseInt(config.get("doorOperationTime"))));
 
 		}
 
@@ -112,6 +128,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			HashMap<String, String> config = floorConfigurations.get(floorName);
 
 			this.portsByFloorName.put(floorName, Integer.parseInt(config.get("port")));
+			this.hostByFloorName.put(floorName, config.get("host"));
 		}
 	}
 
@@ -137,6 +154,83 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			}
 		}
 		return eventsQueue.poll();
+	}
+
+	/**
+	 * This method is called by a monitoredEventTimer when the timer is complete.
+	 * This means the timer was not cancelled before its deadline was reached. This
+	 * method will handle the missed deadline for the monitoredSchedulerEvent.
+	 * 
+	 * @param subsystemName
+	 */
+	public synchronized void monitoredEventTimerComplete(String subsystemName) {
+		// Check to ensure a monitoredEventTimer was created for this subsystemName
+		MonitoredEventTimer monitoredEventTimer = this.monitoredSchedulerEvents.get(subsystemName);
+		if (monitoredEventTimer == null) {
+			return;
+		}
+
+		MonitoredSchedulerEvent monitoredSchedulerEvent = monitoredEventTimer.getMonitoredSchedulerEvent();
+		switch (monitoredSchedulerEvent) {
+		case ELEVATOR_MOVE:
+			Monitor elevatorMonitor = this.elevatorMonitorByElevatorName.get(subsystemName);
+
+			// If an elevator response has not been received for an ELEVATOR_MOVE
+			// monitoredEvent, then set the Elevator as OUT_OF_SERVICE
+			elevatorMonitor.updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus.OUT_OF_SERVICE);
+			this.toString("[RESPONSE NOT RECEIVED FROM " + subsystemName
+					+ "] Expected floor arrival notice. Elevator stuck between floors. " + subsystemName
+					+ " is OUT OF SERVICE");
+
+			// Rescheduled any pending trips (that have not yet begun, in other words,
+			// pickup hasn't occurred) from this elevator.
+			ArrayList<MakeTrip> reassignableTripRequests = elevatorMonitor.unassignPendingTripRequests();
+			for (MakeTrip tripRequest : reassignableTripRequests) {
+				this.toString("Reassigning pending trip request " + tripRequest + " from " + subsystemName + "...");
+				this.eventTripRequestReceived(tripRequest);
+			}
+			break;
+		case ELEVATOR_OPEN_DOOR:
+			// Resend elevator door open
+			this.toString("[RESPONSE NOT RECEIVED FROM " + subsystemName + "] Expected door open confirmation");
+			this.toString(SystemEnumTypes.RequestEvent.SENT, subsystemName, "Open elevator door.");
+			this.sendToServer(new ElevatorDoorRequest(subsystemName, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN),
+					this.hostByElevatorName.get(subsystemName), this.portsByElevatorName.get(subsystemName));
+			break;
+		case ELEVATOR_CLOSE_DOOR:
+			// resend elevator door close
+			this.toString("[RESPONSE NOT RECEIVED FROM " + subsystemName + "] Expected door closed confirmation");
+			this.toString(SystemEnumTypes.RequestEvent.SENT, subsystemName, "Close elevator door.");
+			this.sendToServer(new ElevatorDoorRequest(subsystemName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+					this.hostByElevatorName.get(subsystemName), this.portsByElevatorName.get(subsystemName));
+			break;
+		}
+	}
+
+	/**
+	 * Add a MonitoredEventTimer for a MonitoredEvent.
+	 * 
+	 * @param subsystemName
+	 * @param eventTimer
+	 */
+	private synchronized void addMonitoredEvent(String subsystemName, MonitoredEventTimer eventTimer) {
+		this.monitoredSchedulerEvents.put(subsystemName, eventTimer);
+	}
+
+	/**
+	 * Remove a MonitoredEvent from the MonitoredSchedulerEvents. This will cancel a
+	 * MonitoredEventTimer, then remove it from the MonitoredSchedulerEvents. This
+	 * is to be called when an expected response for a monitored event from a
+	 * subsystem has been received.
+	 * 
+	 * @param subsystemName
+	 */
+	private synchronized void removeMonitoredEvent(String subsystemName) {
+		MonitoredEventTimer monitoredEventTimer = this.monitoredSchedulerEvents.get(subsystemName);
+		if (monitoredEventTimer != null) {
+			monitoredEventTimer.cancel();
+		}
+		this.monitoredSchedulerEvents.remove(subsystemName);
 	}
 
 	@Override
@@ -172,9 +266,16 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		} else if (event instanceof ElevatorArrivalRequest) {
 			ElevatorArrivalRequest request = (ElevatorArrivalRequest) event;
 
-			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
-					"Elevator has arrived at the floor: " + request.getFloorName() + ".");
-			this.eventElevatorArrivalNotice(request.getElevatorName(), Integer.parseInt(request.getFloorName()));
+			// Only handle this event if the elevatorStatus is not OUT OF SERVICE
+			if (this.elevatorMonitorByElevatorName.get(request.getElevatorName())
+					.getElevatorStatus() != SystemEnumTypes.ElevatorCurrentStatus.OUT_OF_SERVICE) {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"Elevator arrival notice at floor " + request.getFloorName() + ".");
+				this.eventElevatorArrivalNotice(request.getElevatorName(), Integer.parseInt(request.getFloorName()));
+			} else {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"[OUT OF SERVICE - Ignored] Elevator arrival notice at floor " + request.getFloorName() + ".");
+			}
 		} else if (event instanceof ElevatorDoorRequest) {
 			ElevatorDoorRequest request = (ElevatorDoorRequest) event;
 
@@ -184,33 +285,133 @@ public class Scheduler implements Runnable, ElevatorEvents {
 				this.eventElevatorDoorOpened(request.getElevatorName());
 			} else if (request.getRequestAction() == SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE) {
 				this.eventElevatorDoorClosed(request.getElevatorName());
+			} else {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"[OUT OF SERVICE - Ignored] Elevator door is " + request.getRequestAction() + ".");
 			}
 		} else if (event instanceof ElevatorMotorRequest) {
 			ElevatorMotorRequest request = (ElevatorMotorRequest) event;
+			// Only handle this event if the elevatorStatus is not OUT OF SERVICE
+			if (this.elevatorMonitorByElevatorName.get(request.getElevatorName())
+					.getElevatorStatus() != SystemEnumTypes.ElevatorCurrentStatus.OUT_OF_SERVICE) {
 
-			if (request.getRequestAction() == SystemEnumTypes.Direction.STAY) {
-				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
-						"Elevator is in free state.");
-				this.eventElevatorStopped(request.getElevatorName());
+				if (request.getRequestAction() == SystemEnumTypes.Direction.STAY) {
+					this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+							"Elevator is in free state.");
+					this.eventElevatorStopped(request.getElevatorName());
+				} else {
+					this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+							"Elevator is in the moving state " + request.getRequestAction() + ".");
+				}
 			} else {
 				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
-						"Elevator is in the moving state " + request.getRequestAction() + ".");
+						"[OUT OF SERVICE - Ignored] Elevator is " + request.getRequestAction() + ".");
 			}
 		} else if (event instanceof ElevatorDestinationRequest) {
 			ElevatorDestinationRequest request = (ElevatorDestinationRequest) event;
 
-			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
-					"Destination request from pickup floor: " + request.getPickupFloor() + " to destination floor: "
-							+ request.getDestinationFloor());
-			this.eventElevatorDestinationRequest(request.getElevatorName(), Integer.parseInt(request.getPickupFloor()),
-					Integer.parseInt(request.getDestinationFloor()));
+			// Only handle this event if the elevatorStatus is not OUT OF SERVICE
+			if (this.elevatorMonitorByElevatorName.get(request.getElevatorName())
+					.getElevatorStatus() != SystemEnumTypes.ElevatorCurrentStatus.OUT_OF_SERVICE) {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"Destination request from pickup floor: " + request.getPickupFloor() + " to destination floor: "
+								+ request.getDestinationFloor());
+				this.eventElevatorDestinationRequest(request.getElevatorName(),
+						Integer.parseInt(request.getPickupFloor()), Integer.parseInt(request.getDestinationFloor()));
+			} else {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"[OUT OF SERVICE - Ignored] Destination request from pickup floor: " + request.getPickupFloor()
+								+ " to destination floor: " + request.getDestinationFloor());
+			}
 		} else if (event instanceof ElevatorWaitRequest) {
 			ElevatorWaitRequest request = (ElevatorWaitRequest) event;
 
-			this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
-					"Elevator completed the waiting.");
-			this.eventElevatorWaitComplete(request.getElevatorName());
+			// Only handle this event if the elevatorStatus is not OUT OF SERVICE
+			if (this.elevatorMonitorByElevatorName.get(request.getElevatorName())
+					.getElevatorStatus() != SystemEnumTypes.ElevatorCurrentStatus.OUT_OF_SERVICE) {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"Elevator has completed its wait.");
+				this.eventElevatorWaitComplete(request.getElevatorName());
+			} else {
+				this.toString(SystemEnumTypes.RequestEvent.RECEIVED, request.getElevatorName(),
+						"[OUT OF SERVICE - Ignored] Elevator has completed its wait.");
+			}
 		}
+		// Set the end time for the request, and add it the event history.
+		event.setEndTime();
+		this.addCompletedEvent(event);
+	}
+
+	/**
+	 * 
+	 * @param event
+	 */
+	private void addCompletedEvent(Request event) {
+		ArrayList<Double> elapsedTimes = this.eventElapsedTimes.get(event.getClass());
+		if (elapsedTimes == null) {
+			elapsedTimes = new ArrayList<Double>();
+			this.eventElapsedTimes.put(event.getClass(), elapsedTimes);
+		}
+		elapsedTimes.add(event.getElapsedTime());
+		this.eventElapsedTimes.put(event.getClass(), elapsedTimes);
+	}
+
+	/**
+	 * Calculates the Scheduler's response mean and variance for every each request
+	 * type. Displays this information to console. All time values are in
+	 * milliseconds.
+	 * 
+	 */
+	public void displaySchedulerResponseTimes() {
+		System.out.println("\n\n-----------------------------------------");
+		System.out.println("Displaying Scheduler Response Statistics");
+		System.out.printf("%-30s %-10s %-22s %-18s %n", "Event Type", "# of Events", "Mean Response(ms)",
+				"Variance(ms^2)");
+		for (Class<?> eventType : this.eventElapsedTimes.keySet()) {
+			ArrayList<Double> elapsedTimes = this.eventElapsedTimes.get(eventType);
+			Double mean = this.calculateMean(elapsedTimes);
+			Double variance = this.calculateVariance(elapsedTimes, mean);
+			System.out.printf("%-30s %10d %22.5f %18.5f %n", eventType.getSimpleName(), elapsedTimes.size(), mean,
+					variance);
+		}
+	}
+
+	/**
+	 * Calculates and returns mean average value of a list containing elapsedTimes
+	 * 
+	 * @param elapsedTimes
+	 * @return mean in nanoseconds
+	 */
+	private Double calculateMean(ArrayList<Double> elapsedTimes) {
+		Double responseTotals = 0.0;
+
+		if (elapsedTimes.size() > 0) {
+			for (Double elapsedTime : elapsedTimes) {
+				responseTotals += elapsedTime;
+			}
+			return responseTotals / elapsedTimes.size();
+		}
+		return 0.0;
+	}
+
+	/**
+	 * Calculates and returns the variance of a list containing elapsedTimes
+	 * 
+	 * @param elapsedTimes
+	 * @param mean
+	 * @return
+	 */
+	private Double calculateVariance(ArrayList<Double> elapsedTimes, Double mean) {
+		Double sum = 0.0;
+
+		if (elapsedTimes.size() > 0) {
+			for (Double elapsedTime : elapsedTimes) {
+				sum += Math.pow(elapsedTime - mean, 2);
+			}
+			return sum / elapsedTimes.size();
+		}
+
+		return 0.0;
 	}
 
 	/**
@@ -219,71 +420,97 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	 * @param request      the request to be sent to the server
 	 * @param elevatorName name of the current elevator
 	 */
-	private void sendToServer(Request request, int port) {
-		try {
-			this.server.send(request, InetAddress.getLocalHost(), port);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+	private void sendToServer(Request request, String host, int port) {
+		this.server.send(request, host, port);
 	}
 
+	
 	/**
-	 * This method is responsible for assigning an incoming tripRequest to one of
-	 * the elevators.
+	 * This method attempts to assign an incoming tripRequest to one of the
+	 * elevators. The first preference is to assign the tripRequest to an in service
+	 * elevator, if the trip is en route. If there are no en-route options, attempt
+	 * to find an idle elevator to service the tripRequest. If this is not possible
+	 * then the tripRequest will be put in a pending queue.
 	 * 
-	 * @param pickupFloorNumber      the pickup floor
-	 * @param destinationFloorNumber the destination floor
-	 * @param direction              the direction of motion
+	 * @param pickupFloorNumber
+	 * @param destinationFloorNumber
+	 * @param direction
 	 */
 	private void eventTripRequestReceived(int pickupFloorNumber, SystemEnumTypes.Direction direction) {
-		// Creates an instance of MakeTrip
+		// Create a TripRequest object
 		MakeTrip tripRequest = new MakeTrip(pickupFloorNumber, direction);
+		this.eventTripRequestReceived(tripRequest);
+	}
 
+	private void eventTripRequestReceived(MakeTrip tripRequest) {
 		Monitor elevatorMonitor = this.planningSystem(tripRequest);
 
-		// Determines the next action for the elevator.
-		// If the elevator is stopped and STAY:
-		// if the request floor, update the floor, and elevator
-		// to wait for passengers. Else, send a door closed event, when the door closed
-		// event is
+		// If an Elevator has been selected for this trip request, determine the next
+		// action required for the elevator.
+		// 1 - If the elevator is stopped and idle, then
+		// i - if it is at the floor of the trip request, then the floor must be
+		// advised, and the elevator needs to be advised to wait for passengers to load
+		// ii - otherwise, send a door closed event, when the door closed event is
 		// confirmed, the scheduler will determine the next direction for the elevator.
 		if (elevatorMonitor != null) {
 			elevatorMonitor.addTripRequest(tripRequest);
-			this.toString("Trip " + tripRequest + " was assigned to " + elevatorMonitor.getElevatorName() + ".");
-			// If the elevator is currently stopped and STAY, then a door close event must
-			// be sent.
+			this.toString(
+					"Trip request " + tripRequest + " was assigned to " + elevatorMonitor.getElevatorName() + ".");
+			// If the elevator is currently stopped and IDLE, then a door close event must
+			// be sent
+			// within a short time (before the elevator door is closed).
 			if ((elevatorMonitor.getElevatorStatus() == SystemEnumTypes.ElevatorCurrentStatus.STOP)
 					&& (elevatorMonitor.getElevatorDirection() == SystemEnumTypes.Direction.STAY)) {
 
-				// Since the elevator is stopped and STAY, check if the floor is the trip
-				// request
-				// If so, the scheduler updates the floor and the elevator to wait
+				// Since the elevator is stopped and idle, check if it is at the floor of the
+				// trip request
+				// If so, the scheduler must then advise the floor and advise elevator to wait
 				// for passengers to load.
 				if (elevatorMonitor.getElevatorFloorLocation() == tripRequest.getUserinitalLocation()) {
-					// Update floor that elevator is accepting passengers
+					// Send event to floor that elevator is ready to accept passengers - this will
+					// ensure the floor sends the corresponding destination request to the elevator
+					// - pushing things forward
 					this.toString(SystemEnumTypes.RequestEvent.SENT, "FLOOR " + tripRequest.getUserinitalLocation(),
 							"Elevator " + elevatorMonitor.getElevatorName() + " has arrived for a pickup/dropoff.");
-					this.sendToServer(new ElevatorArrivalRequest(elevatorMonitor.getElevatorName(),
-							String.valueOf(tripRequest.getUserinitalLocation()), elevatorMonitor.getQueueDirection()),
+					this.sendToServer(
+							new ElevatorArrivalRequest(elevatorMonitor.getElevatorName(),
+									String.valueOf(tripRequest.getUserinitalLocation()), elevatorMonitor.getQueueDirection()),
+							this.hostByFloorName.get(tripRequest.getUserinitalLocation()),
 							this.portsByFloorName.get(String.valueOf(tripRequest.getUserinitalLocation())));
 
-					// Send wait command to the elevator to simulate
-					// passengers leaving and entering the elevator
-					this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorMonitor.getElevatorName(),
-							"Wait at floor for passengers to load.");
-					this.sendToServer(new ElevatorWaitRequest(elevatorMonitor.getElevatorName()),
-							this.portsByElevatorName.get(elevatorMonitor.getElevatorName()));
-					return;
+					// Only if this was the first trip added to the queue at this stop, send an
+					// elevator wait arrival command, this is to handle the case where an elevator
+					// is stopped and idle and receives
+					// two requests for trips before the elevator is done waiting from the first
+					// request (as the elevator state would still be STOPPED and IDLE until the wait
+					// is over).
+					if (elevatorMonitor.getQueueLength() == 1) {
+						// Send a wait at floor command to the elevator - this is to simulate both
+						// passengers leaving and entering the elevator
+						this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorMonitor.getElevatorName(),
+								"Wait at floor for passengers to load.");
+						this.sendToServer(new ElevatorWaitRequest(elevatorMonitor.getElevatorName()),
+								this.hostByElevatorName.get(elevatorMonitor.getElevatorName()),
+								this.portsByElevatorName.get(elevatorMonitor.getElevatorName()));
+						return;
+					}
 				}
 
-				// Else since the elevator is STAY and stopped but not at the right floor,
+				// Otherwise, since the elevator is idle and stopped but not at the right floor,
 				// it must close its door to start moving in the right direction.
-				this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorMonitor.getElevatorName(),
-						"Close elevator door.");
-				this.sendToServer(
-						new ElevatorDoorRequest(elevatorMonitor.getElevatorName(),
-								SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
-						this.portsByElevatorName.get(elevatorMonitor.getElevatorName()));
+				// Only if this was the first trip added to the queue at this stop, send an
+				// elevator close door command, this is to handle the case where an elevator is
+				// stopped and idle and receives
+				// two requests for trips before the elevator has closed its door from the
+				// previous request (as the elevator state would still be STOPPED and IDLE until
+				// the wait is over).
+				if (elevatorMonitor.getQueueLength() == 1) {
+					this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorMonitor.getElevatorName(), "Close elevator door.");
+					this.sendToServer(
+							new ElevatorDoorRequest(elevatorMonitor.getElevatorName(), SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
+							this.hostByElevatorName.get(elevatorMonitor.getElevatorName()),
+							this.portsByElevatorName.get(elevatorMonitor.getElevatorName()));
+				}
 			}
 		} else {
 			// Add this tripRequest to the pendingTripRequests queue
@@ -398,7 +625,7 @@ public class Scheduler implements Runnable, ElevatorEvents {
 			this.toString("Stop is required for " + elevatorName + " at floor " + floorNumber);
 			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Stop elevator.");
 			this.sendToServer(new ElevatorMotorRequest(elevatorName, SystemEnumTypes.Direction.STAY),
-					this.portsByElevatorName.get(elevatorName));
+					this.hostByElevatorName.get(elevatorName), this.portsByElevatorName.get(elevatorName));
 		} else {
 			this.toString("Stop is not required for " + elevatorName + " at floor " + floorNumber);
 			SystemEnumTypes.Direction nextDirection = elevatorMonitor.getNextElevatorDirection();
@@ -427,7 +654,17 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		// Send an open door event to the elevator
 		this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Open elevator door.");
 		this.sendToServer(new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.OPEN),
-				this.portsByElevatorName.get(elevatorName));
+				this.hostByElevatorName.get(elevatorName), this.portsByElevatorName.get(elevatorName));
+
+		// Monitor the Elevator Move request
+		MonitoredEventTimer monitoredEventTimer = new MonitoredEventTimer(this, elevatorName,
+				MonitoredSchedulerEvent.ELEVATOR_OPEN_DOOR,
+				(int) (elevatorMonitor.getDoorOperationTime() * this.monitoredSchedulerDelayFactor));
+		this.addMonitoredEvent(elevatorName, monitoredEventTimer);
+
+		// Start the monitored event timer
+		Thread t = new Thread(monitoredEventTimer);
+		t.start();
 
 	}
 
@@ -460,11 +697,13 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		this.sendToServer(
 				new ElevatorArrivalRequest(elevatorName, String.valueOf(elevatorMonitor.getElevatorFloorLocation()),
 						elevatorMonitor.getQueueDirection()),
+				this.hostByFloorName.get(String.valueOf(elevatorMonitor.getElevatorFloorLocation())),
 				this.portsByFloorName.get(String.valueOf(elevatorMonitor.getElevatorFloorLocation())));
 
 		// Update the elevator to wait at a floor
 		this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Wait at floor.");
-		this.sendToServer(new ElevatorWaitRequest(elevatorName), this.portsByElevatorName.get(elevatorName));
+		this.sendToServer(new ElevatorWaitRequest(elevatorName), this.hostByElevatorName.get(elevatorName),
+				this.portsByElevatorName.get(elevatorName));
 	}
 
 	/**
@@ -481,7 +720,8 @@ public class Scheduler implements Runnable, ElevatorEvents {
 
 			// Update the elevator to wait
 			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Continue to wait at floor...");
-			this.sendToServer(new ElevatorWaitRequest(elevatorName), this.portsByElevatorName.get(elevatorName));
+			this.sendToServer(new ElevatorWaitRequest(elevatorName), this.hostByElevatorName.get(elevatorName),
+					this.portsByElevatorName.get(elevatorName));
 
 			// If there are floors to visit, send the ElevatorDoorRequest
 			// to close doors
@@ -490,8 +730,17 @@ public class Scheduler implements Runnable, ElevatorEvents {
 
 			this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
 			this.sendToServer(new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
-					this.portsByElevatorName.get(elevatorName));
+					this.hostByElevatorName.get(elevatorName), this.portsByElevatorName.get(elevatorName));
 
+			// Monitor the Elevator Move request
+			MonitoredEventTimer monitoredEventTimer = new MonitoredEventTimer(this, elevatorName,
+					MonitoredSchedulerEvent.ELEVATOR_CLOSE_DOOR,
+					(int) (elevatorMonitor.getDoorOperationTime() * this.monitoredSchedulerDelayFactor));
+			this.addMonitoredEvent(elevatorName, monitoredEventTimer);
+
+			// Start the monitored event timer
+			Thread t = new Thread(monitoredEventTimer);
+			t.start();
 			// If there are no more floors to visit, determine whether the
 			// elevator is on its start floor or not.
 		} else {
@@ -519,7 +768,17 @@ public class Scheduler implements Runnable, ElevatorEvents {
 				this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Close elevator door.");
 				this.sendToServer(
 						new ElevatorDoorRequest(elevatorName, SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE),
-						this.portsByElevatorName.get(elevatorName));
+						this.hostByElevatorName.get(elevatorName), this.portsByElevatorName.get(elevatorName));
+
+				// Monitor the Elevator Move request
+				MonitoredEventTimer monitoredEventTimer = new MonitoredEventTimer(this, elevatorName,
+						MonitoredSchedulerEvent.ELEVATOR_CLOSE_DOOR,
+						(int) (elevatorMonitor.getDoorOperationTime() * this.monitoredSchedulerDelayFactor));
+				this.addMonitoredEvent(elevatorName, monitoredEventTimer);
+
+				// Start the monitored event timer
+				Thread t = new Thread(monitoredEventTimer);
+				t.start();
 			}
 		}
 	}
@@ -532,23 +791,48 @@ public class Scheduler implements Runnable, ElevatorEvents {
 	 * @param elevatorName
 	 */
 	private void eventElevatorDoorClosed(String elevatorName) {
+		// Remove the Door request from monitorElevatorEvents for this elevator
+		// 'elevatorName'
+		// Presumably this is occurring before the monitoredEventTimer has completed.
+		this.removeMonitoredEvent(elevatorName);
+
+		// Get the elevatorMonitor for this elevator
 		Monitor elevatorMonitor = this.elevatorMonitorByElevatorName.get(elevatorName);
+
+		// Update current elevator door status
 		elevatorMonitor.updateElevatorDoorStatus(SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE);
-		// obtaining the next direction of motion of the elevator form the monitor
+
+		// Get the next direction for this elevator based on the elevatorMonitor
 		SystemEnumTypes.Direction nextDirection = elevatorMonitor.getNextElevatorDirection();
+
+		// Update elevator current direction
 		elevatorMonitor.updateElevatorDirection(nextDirection);
-		// sending a request to move the elevator in the direction it is supposed to go
+
+		// send an elevator move event in the next direction it needs to go
 		this.sendElevatorMoveEvent(elevatorName, nextDirection);
 	}
 
 	private void sendElevatorMoveEvent(String elevatorName, SystemEnumTypes.Direction direction) {
 		Monitor elevatorMonitor = this.elevatorMonitorByElevatorName.get(elevatorName);
+
+		// Update elevator status to Moving
 		elevatorMonitor.updateElevatorStatus(SystemEnumTypes.ElevatorCurrentStatus.MOVE);
+		// Update elevator direction
 		elevatorMonitor.updateElevatorDirection(direction);
 
 		this.toString(SystemEnumTypes.RequestEvent.SENT, elevatorName, "Move elevator " + direction + ".");
-		this.sendToServer(new ElevatorMotorRequest(elevatorName, direction),
+		this.sendToServer(new ElevatorMotorRequest(elevatorName, direction), this.hostByElevatorName.get(elevatorName),
 				this.portsByElevatorName.get(elevatorName));
+
+		// Monitor the Elevator Move request
+		MonitoredEventTimer monitoredEventTimer = new MonitoredEventTimer(this, elevatorName,
+				MonitoredSchedulerEvent.ELEVATOR_MOVE,
+				(int) (elevatorMonitor.getTimeBetweenFloors() * this.monitoredSchedulerDelayFactor));
+		this.addMonitoredEvent(elevatorName, monitoredEventTimer);
+
+		// Start the monitored event timer
+		Thread t = new Thread(monitoredEventTimer);
+		t.start();
 	}
 
 	/**
@@ -631,5 +915,14 @@ public class Scheduler implements Runnable, ElevatorEvents {
 		// Starting a new thread for this Scheduler
 		Thread schedulerThread = new Thread(scheduler, schedulerConfiguration.get("name"));
 		schedulerThread.start();
+
+		// Sleep for 2.5 minutes to allow for simulation to complete. Then computer
+		// Scheduler's average response times
+		try {
+			Thread.sleep(150000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		scheduler.displaySchedulerResponseTimes();
 	}
 }

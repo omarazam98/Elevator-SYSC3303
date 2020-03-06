@@ -27,7 +27,6 @@ import enums.SystemEnumTypes.RequestEvent;
  * communicate with it This class is responsible for the elevator system
  * management
  * 
- * @author JCS
  *
  */
 public class ElevatorSubsystem implements Runnable, ElevatorEvents {
@@ -39,10 +38,11 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	private boolean debug = false;
 	private int schedulerPort;
 	private String name;
-	private int traveltime;
-	private int passengertime;
-	private int doortime;
+	private int travelTime;
+	private int passengerTime;
+	private int doorTime;
 	private boolean destinationRequestFlag = false;
+	private InetAddress host;
 
 	/**
 	 * The constructor
@@ -52,19 +52,26 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	 * @param start         the starting floor of the elevator
 	 * @param schedulerPort the scheduler port
 	 * @param totalNum      the total number of the floors
-	 * @param traveltime    the time elevator need to travel
-	 * @param passengertime the time passenger get in and off the elevator
-	 * @param doortime      the time elevator open/close the door
+	 * @param travelTime    the time elevator need to travel
+	 * @param passengerTime the time passenger get in and off the elevator
+	 * @param doorTime      the time elevator open/close the door
 	 */
-	public ElevatorSubsystem(String name, int port, int start, int schedulerPort, int totalNum,int traveltime,int passengertime,int doortime) {
+	public ElevatorSubsystem(String name, int port, int start, int schedulerPort, int totalNum, int travelTime,int passengerTime,int doorTime, String host) {
+		
 		this.name = name;
 		this.events = new LinkedList<Request>();
+		this.travelTime = travelTime;
+		this.passengerTime = passengerTime;
+		this.doorTime = doorTime;
 		this.state = new ElevatorState(start, start, Direction.STAY, ElevatorCurrentStatus.STOP,
-				ElevatorCurrentDoorStatus.OPEN, totalNum);
+				ElevatorCurrentDoorStatus.OPEN, totalNum, travelTime, passengerTime, doorTime);
 		this.schedulerPort = schedulerPort;
-		this.doortime = doortime;
-		this.passengertime = passengertime;
-		this.traveltime = traveltime;
+		try {
+			this.host =  InetAddress.getByName(host);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		// Creating a server for current instance of the ElevatorSubSystem in a new
 		// thread.
@@ -142,7 +149,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			this.toString("Elevator motor set to move up. Simulating travel time...");
 			try {
 				
-				Thread.sleep(this.traveltime);
+				Thread.sleep(this.travelTime);
 			} catch (java.lang.InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -163,7 +170,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			this.state.setStatus(ElevatorCurrentStatus.MOVE);
 			this.toString("Elevator motor set to move down. Simulating travel time...");
 			try {
-				Thread.sleep(this.traveltime);
+				Thread.sleep(this.travelTime);
 			} catch (java.lang.InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -183,7 +190,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		
 		this.toString("Elevator is opening the door...");
 		try {
-			Thread.sleep(this.doortime);
+			Thread.sleep(this.doorTime);
 		}catch(java.lang.InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -201,7 +208,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	private void doorClose() {
 		this.toString("Elevator is closing the door...");
 		try {
-			Thread.sleep(this.doortime);
+			Thread.sleep(this.doorTime);
 		}catch(java.lang.InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -215,10 +222,10 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
    /*
     * Deals with elevator loading passengers
     */
-	private void WaitforPassengers(){
- 		this.toString("Elevator is waiting while loading passengers...");
+	private void waitforPassengers(){
+ 		this.toString("Elevator is waiting for passengers to enter...");
  		try {
- 			Thread.sleep(this.passengertime);
+ 			Thread.sleep(this.passengerTime);
  		} catch (java.lang.InterruptedException e) {
  			e.printStackTrace();
  		}
@@ -242,7 +249,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
  		}
  	}
 
- 	private void DestinationRequest(ElevatorDestinationRequest request){
+ 	private void destinationRequest(ElevatorDestinationRequest request){
  		this.toggleLamp(Integer.parseInt(request.getDestinationFloor()), true);
  		this.sendServer(request);
  		boolean tempflag = false;
@@ -266,8 +273,8 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 	 */
 	private void sendServer(Request request) {
 		try {
-			this.server.send(request, InetAddress.getLocalHost(), this.schedulerPort);
-		} catch (UnknownHostException e) {
+			this.server.send(request, this.host.getHostAddress(), this.schedulerPort);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -328,11 +335,11 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 		} else if (event instanceof ElevatorDestinationRequest) {
 			ElevatorDestinationRequest request = (ElevatorDestinationRequest) event;
 			this.toString(RequestEvent.RECEIVED, "floor", "destination request to:"+ request.getDestinationFloor());
-			this.DestinationRequest(request);
+			this.destinationRequest(request);
 		}
 		else if (event instanceof ElevatorWaitRequest) {
 			this.toString(RequestEvent.RECEIVED, "Scheudler", "Waiting for Passengers");
-			this.WaitforPassengers();
+			this.waitforPassengers();
 		}
 	}
 
@@ -380,7 +387,7 @@ public class ElevatorSubsystem implements Runnable, ElevatorEvents {
 			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevator, Integer.parseInt(elevatorConfiguration.get("port")),
 					Integer.parseInt(elevatorConfiguration.get("startFloor")), Integer.parseInt(schedulerConfiguration.get("port")),temp,
 					Integer.parseInt(elevatorConfiguration.get("timeBetweenFloors")), Integer.parseInt(elevatorConfiguration.get("passengerWaitTime")),
-					Integer.parseInt(elevatorConfiguration.get("doorOperationTime")));
+					Integer.parseInt(elevatorConfiguration.get("doorOperationTime")), schedulerConfiguration.get("host"));
 					
 			// Spawn and start a new thread for this ElevatorSubsystem instance
 			Thread elevatorSubsystemThread = new Thread(elevatorSubsystem, elevator);

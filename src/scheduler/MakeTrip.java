@@ -11,6 +11,7 @@ public class MakeTrip {
 	private int userFinalLocation;
 	private SystemEnumTypes.Direction direction;
 	private boolean hasDestination;
+	private long startTime, elapsedTime, endTime;
 
 	/**
 	 * Constructor
@@ -22,6 +23,7 @@ public class MakeTrip {
 		this.userinitalLocation = pickupFloor;
 		this.hasDestination = false;
 		this.direction = direction;
+		this.startTime = System.nanoTime();
 	}
 
 	/**
@@ -79,6 +81,14 @@ public class MakeTrip {
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Set the end time for this TripRequest.
+	 */
+	public void setCompleted() {
+		this.endTime = System.nanoTime();
+		this.elapsedTime = System.nanoTime();
 	}
 
 	/**

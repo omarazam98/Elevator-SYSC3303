@@ -48,30 +48,38 @@ public class Server implements Runnable {
 	 * printPacketEventDetails method. The sockets stays open even when the sent is
 	 * complete
 	 */
-	public void send(Request request, InetAddress inetAddress, Integer port) {
+	public void send(Request request, String host, Integer port) {
 
 		DatagramPacket packet = null;
 		try {
 			packet = Helper.CreateRequest(request);
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (Exception e1) {
+			e1.printStackTrace();
 		}
-
-		// Sets packet final location
-		packet.setAddress(inetAddress);
+		
+		InetAddress hostAddress = null;
+		try {
+			hostAddress = InetAddress.getByName(host);
+		} catch (Exception E) {
+			
+		}
+		
+		//Set destination of packet
+		packet.setAddress(hostAddress);
 		packet.setPort(port);
-
-		if (this.debug) {
+		
+		if(this.debug) {
 			printPacketEventDetails(ElevatorSystemConfiguration.SEND_PACKET_EVENT, packet, this.sendSocket);
 		}
-
-		// Sending the packet
+		
+		//Send packet using sendSocket
 		try {
 			this.sendSocket.send(packet);
 		} catch (IOException e) {
 			e.printStackTrace();
-			// System.exit(1);
+			System.exit(1);
 		}
+		
 
 	}
 
@@ -199,6 +207,8 @@ public class Server implements Runnable {
 			// turn the packet received into a Request and add it to the
 			// elevatorSystemComponent's queue.
 			try {
+				Request request = Helper.ParseRequest(packet);
+				request.setStartTime();
 				elevatorSystemComponent.receiveEvent(Helper.ParseRequest(packet));
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -1,13 +1,11 @@
 package requests;
 
-import java.util.Date;
-
 /**
  * This class deals with the requests that are being made
  *
  */
 public class Request {
-	private Date time;
+//	private Date time;
 	private int floor;
 	private String direction;
 	private int carButton;
@@ -17,6 +15,7 @@ public class Request {
 	public String Receiver;
 
 	public String Sender;
+	private long startTime, endTime, elapsedTime;
 
 	protected Request() {
 
@@ -26,13 +25,11 @@ public class Request {
 		this.destination = destination;
 		this.source = source;
 	}
-
-	public Request(Date time, int floor, String direction, int carButton) {
-		this.time = time;
-		this.floor = floor;
-		this.direction = direction;
-		this.carButton = carButton;
-	}
+	/*
+	 * public Request(Date time, int floor, String direction, int carButton) {
+	 * this.time = time; this.floor = floor; this.direction = direction;
+	 * this.carButton = carButton; }
+	 */
 
 	public void setFloor(int floor) {
 		this.floor = floor;
@@ -42,9 +39,11 @@ public class Request {
 		RequestType = new byte[] { RequestType[0], RequestType[1] };
 		this.requestType = RequestType;
 	}
+
 	public String getSender() {
 		return Sender;
 	}
+
 	public void setSender(String destinationName) {
 		Sender = destinationName;
 	}
@@ -91,8 +90,20 @@ public class Request {
 		source = sourceName;
 	}
 
-	public Date getTime() {
-		return time;
+	/*
+	 * public Date getTime() { return time; }
+	 */
+	public void setStartTime() {
+		this.startTime = System.nanoTime();
+	}
+
+	public void setEndTime() {
+		this.endTime = System.nanoTime();
+		this.elapsedTime = this.endTime - this.startTime;
+	}
+
+	public double getElapsedTime() {
+		return (double) this.elapsedTime / 1000000;
 	}
 
 }

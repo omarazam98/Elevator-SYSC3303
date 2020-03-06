@@ -20,8 +20,11 @@ public class ElevatorState {
 	private Direction direction;
 	private ElevatorCurrentStatus status;
 	private ElevatorCurrentDoorStatus doorStatus;
-	private int totalNum;
+	private int totalFloor;
 	private HashMap<Integer, Boolean> lamps;
+	private Integer timeBetweenFloors;
+	private Integer passengerWaitTime;
+	private Integer doorOperationTime;
 
 	/**
 	 * Constructor
@@ -33,17 +36,21 @@ public class ElevatorState {
 	 * @param totalNum the total number of floors
 	 */
 	public ElevatorState(int start, int current, Direction direction, ElevatorCurrentStatus status,
-			ElevatorCurrentDoorStatus doorStatus, int totalNum) {
+			ElevatorCurrentDoorStatus doorStatus, int totalNum, Integer timeBetweenFloors, Integer passengerWaitTime, Integer doorOperationTime) {
 
 		this.startFloor = start;
 		this.currentFloor = current;
 		this.direction = direction;
 		this.status = status;
 		this.doorStatus = doorStatus;
-		this.totalNum = totalNum;
+		this.totalFloor = totalNum;
 		this.lamps = new HashMap<Integer, Boolean>();
 
-		for (int i = 1; i <= this.totalNum; i++) {
+		this.timeBetweenFloors= timeBetweenFloors;
+		this.passengerWaitTime= passengerWaitTime;
+		this.doorOperationTime= doorOperationTime;
+
+		for (int i = 1; i <= this.totalFloor; i++) {
 			lamps.put(i, false);
 		}
 
@@ -102,15 +109,42 @@ public class ElevatorState {
 
 	// get the highest floor
 	public int getHighestFloor() {
-		return this.totalNum;
+		return this.totalFloor;
 	}
 
 	// set the highest floor
 	public void setHighestFloor(int i) {
-		this.totalNum = i;
+		this.totalFloor = i;
 	}
 
 	public void toggleLamp(int floor, boolean toggle) {
 		lamps.put(floor, toggle);
+	}
+	public HashMap<Integer, Boolean> getLamps() {
+		// TODO Auto-generated method stub
+		return this.lamps;
+	}
+	public Integer getPassengerWaitTime() {
+		return passengerWaitTime;
+	}
+
+	public void setPassengerWaitTime(Integer time) {
+		this.passengerWaitTime = time;
+	}
+
+	public Integer getDoorOperationTime() {
+		return doorOperationTime;
+	}
+
+	public void setDoorOperationTime(Integer time) {
+		this.doorOperationTime = time;
+	}
+
+	public Integer getTimeBetweenFloors() {
+		return timeBetweenFloors;
+	}
+
+	public void setTimeBetweenFloors(Integer time) {
+		this.timeBetweenFloors = time;
 	}
 }

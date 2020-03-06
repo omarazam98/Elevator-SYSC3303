@@ -7,17 +7,21 @@ import org.junit.Test;
 
 import enums.SystemEnumTypes;
 import requests.ElevatorLampRequest;
-
+/**
+ * 
+ * Test class for elevator lamp request class
+ *
+ */
 public class ElevatorLampRequestTest {
 
 	private ElevatorLampRequest ElevatorLampReq;
 
-	@Before
+	@Before//initial setup
 	public void setUp() throws Exception {
 		ElevatorLampReq = new ElevatorLampRequest("", SystemEnumTypes.FloorDirectionLampStatus.ON);
 	}
 
-	@Test
+	@Test//test set and get button
 	public void testSetButton() {
 		ElevatorLampReq.setElevatorButton("14");
 		assertEquals(ElevatorLampReq.getElevatorButton(), "14");
