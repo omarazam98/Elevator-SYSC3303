@@ -1,6 +1,7 @@
 package requests;
 
 import enums.SystemEnumTypes;
+import enums.SystemEnumTypes.Fault;
 
 /**
  * This class deals with the FloorButtonRequests
@@ -16,6 +17,7 @@ public class FloorButtonRequest extends Request {
 	private SystemEnumTypes.Direction pressedButtonDirection;
 	// the final floor where the user wants to go
 	private String DestinationFloor;
+	private Fault fault;
 	// for parsing the input form the configuration file
 	private static byte[] RequestType = new byte[] { 1, 6 };
 
@@ -34,6 +36,10 @@ public class FloorButtonRequest extends Request {
 		this.currentFloorName = FloorName;
 		this.pressedButtonDirection = Direction;
 		this.DestinationFloor = destinationFloor;
+	}
+	public FloorButtonRequest(String time, String FloorName, SystemEnumTypes.Direction Direction, String destination, Fault fault){
+		this(time, FloorName, Direction, destination);
+		this.setFault(fault);
 	}
 
 	public String getButtonPressTime() {
@@ -66,6 +72,13 @@ public class FloorButtonRequest extends Request {
 
 	public void setDestinationFloor(String destinationFloor) {
 		DestinationFloor = destinationFloor;
+	}
+	public Fault getFault() {
+		return fault;
+	}
+
+	public void setFault(Fault fault) {
+		this.fault = fault;
 	}
 
 	public static byte[] getRequestType() {

@@ -1,10 +1,13 @@
 package requests;
 
+import enums.SystemEnumTypes.Fault;
+
 public class ElevatorDestinationRequest extends Request {
 
 	private String DestinationFloor;
 	private String ElevatorName;
 	private String PickupFloor;
+	private Fault fault;
 	private static byte[] RequestType = new byte[] { 1, 8 };
 
 	/**
@@ -20,6 +23,10 @@ public class ElevatorDestinationRequest extends Request {
 		this.setPickupFloor(pickupFloor);
 		this.setDestinationFloor(destName);
 		this.setElevatorName(elevatorName);
+	}
+	public ElevatorDestinationRequest(String pickupFloor, String destName, String elevatorName, Fault fault){
+		this(pickupFloor, destName, elevatorName);
+		this.setFault(fault);
 	}
 
 	public static byte[] getRequestType() {
@@ -61,6 +68,16 @@ public class ElevatorDestinationRequest extends Request {
 		return PickupFloor;
 	}
 
+	public Fault getFault() {
+		return fault;
+	}
+
+	/**
+	 * @param fault the fault to set
+	 */
+	public void setFault(Fault fault) {
+		this.fault = fault;
+	}
 	/**
 	 * @param pickupFloor the from which a request is made
 	 */

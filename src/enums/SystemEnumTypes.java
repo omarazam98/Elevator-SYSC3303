@@ -30,5 +30,9 @@ public class SystemEnumTypes {
 		ELEVATOR_OPEN_DOOR,
 		ELEVATOR_CLOSE_DOOR
 	}
+	public enum Fault {
+		DOOR,
+		MOTOR
+	}
 
 }
