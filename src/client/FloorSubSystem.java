@@ -26,7 +26,6 @@ import requests.ElevatorDestinationRequest;
 import requests.FloorButtonRequest;
 import requests.Request;
 import server.Server;
-import enums.SystemEnumTypes;
 import enums.SystemEnumTypes.Direction;
 import enums.SystemEnumTypes.Fault;
 import enums.SystemEnumTypes.FloorDirectionLampStatus;
@@ -45,17 +44,17 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
 
 
     private Server server;
-    private String name;
+    private String floorNum;
     private int schedulerPort;
     private String schedulerHost;
     private final boolean debug = false;
     private final static String requestsFile = "resources/requests.txt";
     private FloorDirectionLampStatus buttonLamp_UP;                                       //Button lamp for UP button
     private FloorDirectionLampStatus buttonLamp_DOWN;                                     //Button lamp for DOWN button
-    private Queue<FloorButtonRequest> upQueue;                              //Queue of requests to be sent to elevator taking UP requests
-    private Queue<FloorButtonRequest> downQueue;                            //Queue of requests to be sent to elevator taking DOWN requests
-    private HashMap<String, Integer> portsByElevatorName;                   //Map of ports for each elevator
-    private HashMap<String,String> hostsByElevatorName;
+    private Queue<FloorButtonRequest> upReqList;                              //Queue of requests to be sent to elevator taking UP requests
+    private Queue<FloorButtonRequest> downReqList;                            //Queue of requests to be sent to elevator taking DOWN requests
+    private HashMap<String, Integer> elevatorPorts;                   //Map of ports for each elevator
+    private HashMap<String,String> elevatorHosts;
 	private Queue<Request> eventsQueue;
 	
     /**
@@ -68,28 +67,27 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
      */
     private FloorSubSystem(String name, int port, int schedulerPort, String schedulerHost, HashMap<String, HashMap<String, String>> elevatorConfiguration) {
         //Set fields
-        this.name = name;
-        this.upQueue = new LinkedList<FloorButtonRequest>();
-        this.downQueue = new LinkedList<FloorButtonRequest>();
+        this.floorNum = name;
+        this.upReqList = new LinkedList<FloorButtonRequest>();
+        this.downReqList = new LinkedList<FloorButtonRequest>();
         this.schedulerPort = schedulerPort;
         this.schedulerHost = schedulerHost;
         this.buttonLamp_UP = FloorDirectionLampStatus.OFF;
         this.buttonLamp_DOWN = FloorDirectionLampStatus.OFF;
-        this.portsByElevatorName = new HashMap<String, Integer>();
-        this.hostsByElevatorName = new HashMap<String,String>();
+        this.elevatorPorts = new HashMap<String, Integer>();
+        this.elevatorHosts = new HashMap<String,String>();
 		this.eventsQueue = new LinkedList<Request>();
 
-        // Create a server (bound to this Instance of FloorSubSystem) in a new thread.
-        // When this server receives requests, they will be added to the eventsQueue of this FloorSubSystem instance.
-        server = new Server(this, port, this.debug);
+		// Create a server for FloorSubsystem in a new thread.
+		server = new Server(this, port, this.debug);
         Thread serverThread = new Thread(server, name);
         serverThread.start();
 
-        //Initialize data structures for elevators
+      //Initialize elevators
         for (String elevatorName : elevatorConfiguration.keySet()) {
             HashMap<String, String> config = elevatorConfiguration.get(elevatorName);
-            this.portsByElevatorName.put(elevatorName, Integer.parseInt(config.get("port")));
-            this.hostsByElevatorName.put(elevatorName, config.get("host"));
+            this.elevatorPorts.put(elevatorName, Integer.parseInt(config.get("port")));
+            this.elevatorHosts.put(elevatorName, config.get("host"));
         }
     }
 
@@ -127,7 +125,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
      * @return name of floor
      */
     public String getName() {
-        return this.name;
+        return this.floorNum;
     }
 
     /**
@@ -182,7 +180,7 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
      * @param FloorDirectionLampStatus Set button lamp to this status
      */
     private void toggleFloorButtonLamp(Direction direction, FloorDirectionLampStatus FloorDirectionLampStatus) {
-        this.consoleOutput("Turning " + direction.toString() + " button lamp " + FloorDirectionLampStatus.toString() + ".");
+        this.toString("Turning " + direction.toString() + " button lamp " + FloorDirectionLampStatus.toString() + ".");
         if (direction == Direction.UP)
             buttonLamp_UP = FloorDirectionLampStatus;
         else if (direction == Direction.DOWN)
@@ -266,20 +264,20 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
         if (event instanceof FloorButtonRequest) {      //If event received is a FloorButtonRequest
             FloorButtonRequest request = (FloorButtonRequest) event;
             
-            this.consoleOutput(RequestEvent.RECEIVED, "Simulated Passenger", "Trip request going " + request.getDirection() + " to " + request.getDestinationFloor());
+            this.toString(RequestEvent.RECEIVED, "Simulated Passenger", "Trip request going " + request.getDirection() + " to " + request.getDestinationFloor());
 
             if (request.getDirection() == Direction.UP){
-                upQueue.add(request);
+                upReqList.add(request);
             } else if (request.getDirection() == Direction.DOWN){
-                downQueue.add(request);
+                downReqList.add(request);
             }
                 //Sends request to scheduler
-                this.consoleOutput(RequestEvent.SENT, "Scheduler", "Trip request going " + request.getDirection());
+                this.toString(RequestEvent.SENT, "Scheduler", "Trip request going " + request.getDirection());
                 this.server.send(request, schedulerHost, schedulerPort);
                 toggleFloorButtonLamp(request.getDirection(), FloorDirectionLampStatus.ON);   //Turn button lamp on for direction in request
         } else if (event instanceof ElevatorArrivalRequest) { //If event received is a ElevatorArrivalRequest
             ElevatorArrivalRequest request = (ElevatorArrivalRequest) event;
-            this.consoleOutput(RequestEvent.RECEIVED, "Scheduler" , "Elevator " + request.getElevatorName() + " has arrived. Elevator is headed " + request.getDirection() + ".");
+            this.toString(RequestEvent.RECEIVED, "Scheduler" , "Elevator " + request.getElevatorName() + " has arrived. Elevator is headed " + request.getDirection() + ".");
             if (request.getDirection() != Direction.STAY) {
             	toggleFloorButtonLamp(request.getDirection(), FloorDirectionLampStatus.OFF);  //Turn off button lamp since Elevator has arrived
             }
@@ -294,19 +292,19 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
      */
     private void sendRequestsToElevator (ElevatorArrivalRequest request) {
         if (request.getDirection() == Direction.UP){    //If Elevator will be going up
-            for (FloorButtonRequest currFloorButtonRequest : upQueue){  //Loop through the queue of trip requests going up
+            for (FloorButtonRequest currFloorButtonRequest : upReqList){  //Loop through the queue of trip requests going up
                 ElevatorDestinationRequest currER = new ElevatorDestinationRequest(this.getName(), currFloorButtonRequest.getDestinationFloor(), request.getElevatorName(), currFloorButtonRequest.getFault());    //Create elevator destination request based on data from the queue
-                this.consoleOutput(RequestEvent.SENT, request.getElevatorName(), "Destination request to floor " + currFloorButtonRequest.getDestinationFloor());
-                sendToServer(currER, this.hostsByElevatorName.get(request.getElevatorName()), this.portsByElevatorName.get(request.getElevatorName()));    //Send the request to the elevator arriving
+                this.toString(RequestEvent.SENT, request.getElevatorName(), "Destination request to floor " + currFloorButtonRequest.getDestinationFloor());
+                sendToServer(currER, this.elevatorHosts.get(request.getElevatorName()), this.elevatorPorts.get(request.getElevatorName()));    //Send the request to the elevator arriving
             }
-            upQueue.clear(); //Clear requests from queue, since they've been sent
+            upReqList.clear(); //Clear requests from queue, since they've been sent
         } else if (request.getDirection() == Direction.DOWN) {    //If elevator will be going down
-            for (FloorButtonRequest currFloorButtonRequest : downQueue){    //Loop through the queue of trip requests going down
+            for (FloorButtonRequest currFloorButtonRequest : downReqList){    //Loop through the queue of trip requests going down
                 ElevatorDestinationRequest currER = new ElevatorDestinationRequest(this.getName(), currFloorButtonRequest.getDestinationFloor(), request.getElevatorName(), currFloorButtonRequest.getFault());    //Create elevator destination request based on data from the queue
-                this.consoleOutput(RequestEvent.SENT, request.getElevatorName(), "Destination request to floor" + currFloorButtonRequest.getDestinationFloor());
-                sendToServer(currER, this.hostsByElevatorName.get(request.getElevatorName()), this.portsByElevatorName.get(request.getElevatorName()));    //Send the request to the elevator arriving
+                this.toString(RequestEvent.SENT, request.getElevatorName(), "Destination request to floor" + currFloorButtonRequest.getDestinationFloor());
+                sendToServer(currER, this.elevatorHosts.get(request.getElevatorName()), this.elevatorPorts.get(request.getElevatorName()));    //Send the request to the elevator arriving
             }
-            downQueue.clear();   //Clear requests from queue, since they've been sent
+            downReqList.clear();   //Clear requests from queue, since they've been sent
         }
     }
 
@@ -315,15 +313,15 @@ public class FloorSubSystem implements Runnable, ElevatorEvents {
      *
      * @param output string to be printed
      */
-    private void consoleOutput(String output) {
-		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor " + this.name + " : " + output);
+    private void toString(String output) {
+		System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor " + this.floorNum + " : " + output);
 	}
 
-	private void consoleOutput(RequestEvent event, String target, String output) {
+	private void toString(RequestEvent event, String target, String output) {
 		if (event.equals(RequestEvent.SENT)) {
-			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor " + this.name + " : [EVENT SENT TO " + target + "] " + output);
+			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor " + this.floorNum + " : [EVENT SENT TO " + target + "] " + output);
 		} else if (event.equals(RequestEvent.RECEIVED)) {
-			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor " + this.name + " : [EVENT RECEIVED FROM " + target + "] " + output);
+			System.out.println("[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss.S")) + "] Floor " + this.floorNum + " : [EVENT RECEIVED FROM " + target + "] " + output);
 		}
 	}
 
