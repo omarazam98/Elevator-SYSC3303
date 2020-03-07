@@ -18,7 +18,7 @@ public class ElevatorStateTest {
 	@Before//initial set up
 	public void setUp() throws Exception {
 		elestate = new ElevatorState(3, 9, SystemEnumTypes.Direction.UP, SystemEnumTypes.ElevatorCurrentStatus.MOVE,
-				SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE, 12);
+				SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE, 12, null, null, null);
 	}
 
 	@Test//set and get startfloor

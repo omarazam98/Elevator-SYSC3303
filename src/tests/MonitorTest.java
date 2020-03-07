@@ -18,7 +18,7 @@ public class MonitorTest {
 	public void setUp() throws Exception {
 		monitor = new Monitor("elevator", 3, 3, SystemEnumTypes.Direction.DOWN,
 				SystemEnumTypes.ElevatorCurrentStatus.MOVE,
-				SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE, 4);
+				SystemEnumTypes.ElevatorCurrentDoorStatus.CLOSE, 4, null, null, null);
 	}
 	
 	@Test//test getElevatorStatus() 

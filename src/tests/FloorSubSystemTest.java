@@ -21,7 +21,7 @@ public class FloorSubSystemTest {
 		tempEle.put("port", "2000");
 		tempConfig.put("E1", tempEle);
 		
-		floorss = new FloorSubSystem("1", 2, 3, tempConfig);
+		floorss = new FloorSubSystem("1", 2, 3, "3", tempConfig);
 	}
 	
 	

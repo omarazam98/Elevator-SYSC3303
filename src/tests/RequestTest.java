@@ -23,44 +23,41 @@ public class RequestTest {
 
     @Before//initial setup()
     public void setUp() throws Exception {
-        req1 = new Request(new Date(), 1, "UP", 3);
-        req2 = new Request(new Date(), 2, "DOWN", 4);
+        req1 = new Request("E", "3");
+        req2 = new Request("F", "4");
     }
 
     @Test//test Request() default constructor
     public void testRequest() {
-        Request testReq = new Request(new Date(), 1, "UP", 3);
+        Request testReq = new Request("E", "3");
         assertTrue(testReq instanceof Request);
     }
-
-    @Test//test GetFloor()
-    public void testGetFloor() {
-        // req1's floor # should equal to 1
-        assertEquals(req1.getFloor(), 1);
+    
+    
+    @Test//test getSource()
+    public void testGetSource() {
+    	assertEquals(req1.getSource(), "E");
     }
 
-    @Test//test SetFloor()
+    @Test//test SetFloor() and GetFloor
     public void testSetFloor() {
+    	req1.setFloor(1);
         // req1's floor # should equal to 1
         assertTrue(req1.getFloor() == 1);
 
         // setting req1's floor # to 2
         req1.setFloor(2);
+        req2.setFloor(2);
 
         // req1 and req2 should have same floor #, 2
         assertEquals(req1.getFloor(), req2.getFloor());
 
     }
 
-    @Test//test GetCarButton() 
-    public void testGetCarButton() {
-        // req1's carButton # should equal to 1
-        assertEquals(req1.getCarButton(), 3);
-    }
-
-    @Test//test SetCarButton()
+    @Test//test SetCarButton() and GetCarButton()
     public void testSetCarButton() {
-        // req1's carButton # should equal to 1
+    	req1.setCarButton(3);
+        // req1's carButton # should equal to 3
         assertTrue(req1.getCarButton() == 3);
 
         // req1's carButton is set to 5
@@ -68,28 +65,23 @@ public class RequestTest {
 
         assertEquals(req1.getCarButton(), 5);
     }
-
-    @Test//test GetTime()
-    public void testGetTime() {
-        // tests if req1's time field has been initialized
-        assertTrue(req1.getTime() != null);
-        assertTrue(req1.getTime() instanceof Date);
+    
+    @Test//test setStartTime(), setEndTime() and getElapsedTime()
+    public void testGetElapsedTime() {
+    	req1.setStartTime();
+    	req1.setEndTime();
+    	assertTrue(req1.getElapsedTime() != 0);
     }
 
-    @Test//test GetDirec()
-    public void testGetDirec() {
-        // req1's direction should be UP
-        assertEquals(req1.getDirec(), "UP");
-    }
-
-    @Test//test SetDirec()
+    @Test//test SetDirec() and GetDirect()
     public void testSetDirec() {
+    	req1.setDirec("UP");
         // req1's direction should be UP
         assertEquals(req1.getDirec(), "UP");
 
         // req1's direction set to down
         req1.setDirec("DOWN");
-
+        req2.setDirec("DOWN");
         // req1 and req2 should have the same direction, DOWN
         assertEquals(req1.getDirec(), req2.getDirec());
     }

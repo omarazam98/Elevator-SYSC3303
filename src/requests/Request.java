@@ -21,7 +21,7 @@ public class Request {
 
 	}
 
-	protected Request(String source, String destination) {
+	public Request(String source, String destination) {
 		this.destination = destination;
 		this.source = source;
 	}

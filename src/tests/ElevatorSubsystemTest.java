@@ -38,7 +38,7 @@ public class ElevatorSubsystemTest {
 			HashMap<String, String> elevatorConfiguration = elevatorConfigurations.get(elevatorName);
 			
 			//Create an instance of ElevatorSubsystem for this 'elevatorName'
-			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName, Integer.parseInt(elevatorConfiguration.get("port")), 0, 0, 0, 0, 0, 0);
+			ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(elevatorName, Integer.parseInt(elevatorConfiguration.get("port")), 0, 0, 0, 0, 0, 0, elevatorName);
 			
 			Thread elevatorSubsystemThread = new Thread(elevatorSubsystem, elevatorName);
 			elevatorSubsystemThread.start();
