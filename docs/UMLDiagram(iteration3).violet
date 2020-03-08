@@ -68,7 +68,7 @@ ElevatorEvents</string>
 -DestinationRequest(request ElevatorDestinationRequest):void
 -WaitforPassengers():void
 +run(): void
-main(args: String[]): void</string>
++main(args: String[]): void</string>
      </void>
     </void>
     <void property="name">
@@ -198,10 +198,10 @@ main(args: String[]): void</string>
 +run(): void
 +main(args: String[]): void
 -sendRequestsToElevator (request:ElevatorArrivalRequest):void 
--consoleOutput(output:String):void 
+-toString(output:String):void 
 -convertTime(dateString:String):static Date 
 -getDirectionFromString(String s):Direction
--consoleOutput(event:RequestEvent ,target: String , output:String ):void </string>
+-toString(event:RequestEvent ,target: String , output:String ):void </string>
      </void>
     </void>
     <void property="name">
