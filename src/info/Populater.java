@@ -147,17 +147,6 @@ public class Populater {
 			Populate(req.getElevatorName());
 		}
 	}
-/*
-	private void PopulateOptionalEnum(Enum<?> e) {
-		if(e != null){ //optional parameter, checking for it before populating/parsing
-			Populate(TF(true));
-			PopulateEnum(e);
-		}
-		else {
-			Populate(TF(false));
-		}
-	}
-	*/
 
 	/**
 	 * 

@@ -15,6 +15,10 @@ import requests.FloorLampRequest;
 import requests.Request;
 import enums.SystemEnumTypes;
 
+/**
+ * 
+ *
+ */
 public class Parser {
 	private byte[] data;
 	private MutInt counter;
