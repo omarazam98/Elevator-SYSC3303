@@ -16,7 +16,7 @@ import requests.Request;
 import enums.SystemEnumTypes;
 
 /**
- * 
+ * The class responsible for parsing of the datagram packets
  *
  */
 public class Parser {
