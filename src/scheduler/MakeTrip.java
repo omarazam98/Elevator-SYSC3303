@@ -27,7 +27,7 @@ public class MakeTrip {
 	}
 
 	/**
-	 * Checks if the elevator has destination or not
+	 * Checks if the elevator has destination
 	 */
 	public boolean hasDestination() {
 		return this.hasDestination;
